@@ -1,4 +1,4 @@
-# Gen-AI Developer Classroom Notes — 28 Jul 2026
+# DAY-1: Gen-AI Developer Classroom Notes — 28 Jul 2026
 
 > **Source:** https://directai.blog/2026/07/28/gen-ai-developer-classroom-notes-28-jul-2026/
 > **Audience:** Gen-AI Developers (Beginner → Intermediate)
