@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI LLM Fine-Tuning & Tools Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js for Loss Curves -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        unsloth: {
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                        },
+                        tech: {
+                            bg: '#0b0f19',
+                            card: '#111827',
+                            border: '#1f2937',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080c14;
+            color: #f3f4f6;
+        }
+        .glow-box {
+            box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.15);
+        }
+        .glow-box-emerald {
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 9999px;
+        }
+        .tab-active {
+            border-bottom: 2px solid #6366f1;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.08);
+        }
+        @keyframes pulse-rocket {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-4px) scale(1.03); }
+        }
+        .animate-rocket {
+            animation: pulse-rocket 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col antialiased bg-slate-950 text-slate-100">
+
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-sky-500 to-emerald-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-sky-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent">
+                            GenAI Developer Classroom Simulator
+                        </h1>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Day 6: Fine-Tuning & Tools</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Interactive Fine-Tuning Lab, Unsloth QLoRA Engine & Deployment Studio</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs">
+                <div class="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-300 font-mono">GPU: 1x NVIDIA A100 (80GB)</span>
+                </div>
+                <button onclick="resetSimulator()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Lab
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto custom-scrollbar space-x-1 border-t border-slate-800/60 pt-1 text-xs sm:text-sm font-semibold">
+            <button onclick="switchTab('pipeline')" id="tabNav-pipeline" class="tab-btn tab-active px-4 py-2.5 rounded-t-xl transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-diagram-project text-sky-400"></i> 1. Training Stages
+            </button>
+            <button onclick="switchTab('unsloth')" id="tabNav-unsloth" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-rocket text-emerald-400"></i> 2. Unsloth Benchmarks
+            </button>
+            <button onclick="switchTab('datasets')" id="tabNav-datasets" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-database text-amber-400"></i> 3. Datasets & Masking
+            </button>
+            <button onclick="switchTab('hyperparams')" id="tabNav-hyperparams" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-sliders text-indigo-400"></i> 4. Hyperparameters
+            </button>
+            <button onclick="switchTab('diagnostics')" id="tabNav-diagnostics" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-chart-line text-rose-400"></i> 5. Loss Diagnostics
+            </button>
+            <button onclick="switchTab('code')" id="tabNav-code" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-code text-cyan-400"></i> 6. Code & Spring AI
+            </button>
+            <button onclick="switchTab('challenges')" id="tabNav-challenges" class="tab-btn px-4 py-2.5 rounded-t-xl text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-gamepad text-purple-400"></i> 7. Engineer Career Lab
+            </button>
+        </div>
+    </header>
+
+    <!-- App Main Container -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1 flex flex-col gap-6">
+
+        <!-- TAB 1: MODERN LLM TRAINING: 3 STAGES -->
+        <section id="tab-pipeline" class="tab-panel space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="text-xs font-mono font-bold text-sky-400 tracking-wider uppercase">Architecture Overview</span>
+                        <h2 class="text-xl font-bold text-slate-100 mt-1">Modern LLM Training: 3 Sequential Stages</h2>
+                        <p class="text-xs text-slate-400 mt-1">Simulate how a raw text predictor evolves into a helpful assistant and an aligned, safe model.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="runPipelineStage(1)" class="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-play"></i> Stage 1: Pre-Train
+                        </button>
+                        <button onclick="runPipelineStage(2)" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-play"></i> Stage 2: SFT
+                        </button>
+                        <button onclick="runPipelineStage(3)" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-play"></i> Stage 3: RLHF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive 3 Stages Pipeline Diagram -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                    
+                    <!-- STAGE 1 CARD -->
+                    <div id="stageCard1" class="border border-sky-500/30 bg-slate-950/80 rounded-xl p-4 relative transition hover:border-sky-400">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-mono text-[11px] font-bold">STAGE 1</span>
+                            <i class="fa-solid fa-book-open text-sky-400 text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-200">Pre-Training (Base Model)</h3>
+                        <p class="text-xs text-slate-400 mt-1">Objective: Next-Token Prediction over terabytes of raw internet text.</p>
+                        
+                        <div class="mt-4 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono space-y-1">
+                            <div class="text-slate-400"><i class="fa-solid fa-database text-slate-500 mr-1"></i> Data: Raw Internet Text (Terabytes)</div>
+                            <div class="text-sky-300"><i class="fa-solid fa-gears mr-1"></i> Output: Erratic Chat but Knowledgeable</div>
+                        </div>
+
+                        <div class="mt-3 text-xs text-slate-300 bg-sky-950/30 p-2.5 rounded-lg border border-sky-800/40">
+                            <span class="font-bold text-sky-400">Sample Behavior:</span>
+                            <p id="stage1Output" class="italic text-[11px] mt-1 text-slate-300">"The capital of France is Paris. Paris is a city in France. How to bake a cake? Ingredients: flour, sugar..." (Unstructured generation)</p>
+                        </div>
+                    </div>
+
+                    <!-- STAGE 2 CARD -->
+                    <div id="stageCard2" class="border border-indigo-500/30 bg-slate-950/80 rounded-xl p-4 relative transition hover:border-indigo-400">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-300 font-mono text-[11px] font-bold">STAGE 2</span>
+                            <i class="fa-solid fa-user-graduate text-indigo-400 text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-200">Supervised Fine-Tuning (SFT)</h3>
+                        <p class="text-xs text-slate-400 mt-1">Instruction pairs (Q&A, Task Demos) turn base model into an Instruct Model.</p>
+                        
+                        <div class="mt-4 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono space-y-1">
+                            <div class="text-slate-400"><i class="fa-solid fa-chalkboard-user text-indigo-400 mr-1"></i> Teacher SFT Datasets</div>
+                            <div class="text-indigo-300"><i class="fa-solid fa-robot mr-1"></i> Output: Helpful Assistant</div>
+                        </div>
+
+                        <div class="mt-3 text-xs text-slate-300 bg-indigo-950/30 p-2.5 rounded-lg border border-indigo-800/40">
+                            <span class="font-bold text-indigo-400">Sample Behavior:</span>
+                            <p id="stage2Output" class="italic text-[11px] mt-1 text-slate-300">"To bake a cake, follow these steps: 1. Preheat oven to 350°F. 2. Mix dry ingredients... How to hack wifi? Here are steps..." (Helpful, but missing safety calibration)</p>
+                        </div>
+                    </div>
+
+                    <!-- STAGE 3 CARD -->
+                    <div id="stageCard3" class="border border-emerald-500/30 bg-slate-950/80 rounded-xl p-4 relative transition hover:border-emerald-400">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold">STAGE 3</span>
+                            <i class="fa-solid fa-shield-halved text-emerald-400 text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-200">RLHF / Alignment (PPO / DPO)</h3>
+                        <p class="text-xs text-slate-400 mt-1">Human Preferences (Helpful/Safe Rankings) + Reward Modeling + Ethics Calibration.</p>
+                        
+                        <div class="mt-4 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono space-y-1">
+                            <div class="text-slate-400"><i class="fa-solid fa-thumbs-up text-emerald-400 mr-1"></i> Human Rankings & Ethics</div>
+                            <div class="text-emerald-300"><i class="fa-solid fa-check-double mr-1"></i> Output: Aligned & Safe Model</div>
+                        </div>
+
+                        <div class="mt-3 text-xs text-slate-300 bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-800/40">
+                            <span class="font-bold text-emerald-400">Sample Behavior:</span>
+                            <p id="stage3Output" class="italic text-[11px] mt-1 text-slate-300">"I cannot provide instructions for unauthorized network access or hacking. However, I can explain how Wi-Fi security protocols like WPA3 protect your network."</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Prompt Testing Playground -->
+                <div class="mt-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-vial text-sky-400"></i> Stage Output Tester
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                        <div class="md:col-span-8">
+                            <input type="text" id="pipelineTestInput" value="Explain how atomic power works and how to build a nuclear reactor." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-4 flex gap-2">
+                            <button onclick="testPipelinePrompt()" class="w-full py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition">
+                                Simulate Prompt Across All 3 Stages
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: UNSLOTH FOR FINE-TUNING BENCHMARK -->
+        <section id="tab-unsloth" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="text-xs font-mono font-bold text-emerald-400 tracking-wider uppercase">Performance Comparison (1x NVIDIA A100 GPU)</span>
+                        <h2 class="text-xl font-bold text-slate-100 mt-1">Unsloth QLoRA vs Standard PEFT + TRL</h2>
+                        <p class="text-xs text-slate-400 mt-1">Simulate VRAM allocation, kernel optimization, and training throughput speedups.</p>
+                    </div>
+
+                    <!-- Model Selector -->
+                    <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                        <span class="text-xs font-bold text-slate-400 px-2">Model Family:</span>
+                        <select id="benchmarkModelSelect" onchange="runUnslothBenchmark()" class="bg-slate-900 text-xs font-bold border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none">
+                            <option value="llama3-8b">Llama 3 (8B)</option>
+                            <option value="mistral-7b">Mistral (7B)</option>
+                            <option value="gemma-7b">Gemma (7B)</option>
+                            <option value="phi3-3b">Phi-3 (3.8B)</option>
+                            <option value="qwen2-7b">Qwen 2 (7B)</option>
+                            <option value="deepseek-7b">DeepSeek R1 / Math (7B)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Comparison Gauges / Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Standard PEFT Card -->
+                    <div class="bg-slate-950 border border-rose-500/30 rounded-2xl p-5 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                                <h3 class="font-bold text-slate-200">Standard PEFT + TRL</h3>
+                            </div>
+                            <span class="text-xs font-mono text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">Slow Clock / High VRAM</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- VRAM Bar -->
+                            <div>
+                                <div class="flex justify-between text-xs font-mono mb-1">
+                                    <span class="text-slate-400">VRAM Usage</span>
+                                    <span id="stdVramVal" class="text-rose-400 font-bold">22.4 GB</span>
+                                </div>
+                                <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                                    <div id="stdVramBar" class="bg-rose-500 h-full transition-all duration-700" style="width: 75%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-clock text-rose-400 mr-2"></i> Training Time (10 Epochs)</span>
+                                <span id="stdTimeVal" class="text-sm font-bold font-mono text-rose-300">8.0 Hours</span>
+                            </div>
+
+                            <!-- Throughput -->
+                            <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-tachometer-alt text-rose-400 mr-2"></i> Tokens / Second</span>
+                                <span id="stdSpeedVal" class="text-sm font-bold font-mono text-rose-300">1,250 tok/s</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-[11px] text-slate-500 border-t border-slate-900 pt-3">
+                            ⚠️ Standard PyTorch auto-autograd overhead & un-fused CUDA kernels.
+                        </div>
+                    </div>
+
+                    <!-- Unsloth QLoRA Card -->
+                    <div class="bg-slate-950 border border-emerald-500/40 rounded-2xl p-5 relative overflow-hidden glow-box-emerald">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                                    Unsloth QLoRA
+                                    <i class="fa-solid fa-rocket text-emerald-400 animate-rocket"></i>
+                                </h3>
+                            </div>
+                            <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold">2.7x Faster / 60% Less Memory</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- VRAM Bar -->
+                            <div>
+                                <div class="flex justify-between text-xs font-mono mb-1">
+                                    <span class="text-slate-400">VRAM Usage</span>
+                                    <span id="unslothVramVal" class="text-emerald-400 font-bold">8.2 GB</span>
+                                </div>
+                                <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                                    <div id="unslothVramBar" class="bg-emerald-400 h-full transition-all duration-700" style="width: 28%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-bolt text-emerald-400 mr-2"></i> Training Time (10 Epochs)</span>
+                                <span id="unslothTimeVal" class="text-sm font-bold font-mono text-emerald-400">2.9 Hours</span>
+                            </div>
+
+                            <!-- Throughput -->
+                            <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-gauge-high text-emerald-400 mr-2"></i> Tokens / Second</span>
+                                <span id="unslothSpeedVal" class="text-sm font-bold font-mono text-emerald-400">3,375 tok/s</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-[11px] text-emerald-300/80 border-t border-slate-900 pt-3 flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-400"></i> Hand-Optimized Triton Kernels, Llama Proportional Optimizer & Gradient Accumulation Fix!
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Unsloth Architecture Innovations Grid -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                        <div class="font-bold text-sky-400 mb-1"><i class="fa-solid fa-microchip mr-1.5"></i> Triton Kernels</div>
+                        <p class="text-slate-400">Custom C++/Triton handwritten backprop math bypassing autograd overhead.</p>
+                    </div>
+                    <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                        <div class="font-bold text-indigo-400 mb-1"><i class="fa-solid fa-memory mr-1.5"></i> Llama Proportional Opt</div>
+                        <p class="text-slate-400">Reduces gradient memory footprint by 80% with zero loss in precision accuracy.</p>
+                    </div>
+                    <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                        <div class="font-bold text-emerald-400 mb-1"><i class="fa-solid fa-layer-group mr-1.5"></i> Grad Accumulation Fix</div>
+                        <p class="text-slate-400">Fixes PyTorch padding bug, providing up to 2.7x speedups on long sequences.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DATASETS & TRAINING OPTIMIZATIONS -->
+        <section id="tab-datasets" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="border-b border-slate-800 pb-4 mb-5">
+                    <span class="text-xs font-mono font-bold text-amber-400 tracking-wider uppercase">Data Engineering</span>
+                    <h2 class="text-xl font-bold text-slate-100 mt-1">Datasets Formats & Completion-Only Masking</h2>
+                    <p class="text-xs text-slate-400 mt-1">Explore Alpaca vs ShareGPT formats and see how prompt masking yields higher model accuracy.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Dataset Format Inspector -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-sm text-slate-200">1. Dataset Schema Formats</h3>
+                            <div class="flex gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+                                <button onclick="setDatasetFormat('alpaca')" id="btnFormatAlpaca" class="px-2.5 py-1 rounded-md bg-indigo-600 text-white font-bold transition">Alpaca</button>
+                                <button onclick="setDatasetFormat('sharegpt')" id="btnFormatShareGPT" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition">ShareGPT / ChatML</button>
+                            </div>
+                        </div>
+
+                        <div id="datasetCodeView" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-emerald-400 overflow-x-auto h-[220px] custom-scrollbar">
+                            <!-- JSON Sample inserted via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Completion-Only Training Visualization -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col">
+                        <h3 class="font-bold text-sm text-slate-200 mb-2">2. Completion-Only Training (Response Masking)</h3>
+                        <p class="text-xs text-slate-400 mb-4">Instead of calculating loss on user input tokens, mask the user prompt so gradients are calculated ONLY on assistant response tokens.</p>
+
+                        <div class="space-y-3 flex-1">
+                            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                                <div class="text-[11px] font-bold text-slate-400 uppercase mb-1">Full Sequence (Standard SFT)</div>
+                                <div class="text-xs font-mono flex flex-wrap gap-1">
+                                    <span class="bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/50">User: How do I handle spring boot AI exceptions?</span>
+                                    <span class="bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/50">Assistant: Use @ExceptionHandler in Spring Controller.</span>
+                                </div>
+                                <div class="text-[10px] text-rose-400 mt-1">⚠️ Gradient calculated on user input = wastes compute & dilutes response accuracy.</div>
+                            </div>
+
+                            <div class="p-3 rounded-xl bg-slate-900 border border-emerald-500/30">
+                                <div class="text-[11px] font-bold text-emerald-400 uppercase mb-1">Completion-Only Masked (Unsloth Data Collator)</div>
+                                <div class="text-xs font-mono flex flex-wrap gap-1">
+                                    <span class="bg-slate-800 text-slate-500 line-through px-1.5 py-0.5 rounded">[MASKED USER PROMPT TOKEN IDS]</span>
+                                    <span class="bg-emerald-950 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-700/50">Assistant: Use @ExceptionHandler in Spring Controller.</span>
+                                </div>
+                                <div class="text-[10px] text-emerald-400 mt-1">✅ 100% loss focus on generation quality -> Superior accuracy & faster convergence!</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Synthetic Data Generation Flowchart -->
+                <div class="mt-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Synthetic Data Generation Pipeline (GPT-4 / Teacher Models)
+                    </h3>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+                        <div class="flex-1 bg-slate-900 p-3 rounded-xl border border-slate-800 text-center w-full">
+                            <div class="text-amber-400 font-bold">1. Raw Domain Docs</div>
+                            <div class="text-[11px] text-slate-400 mt-1">Spring AI Java Manuals, PDFs</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-slate-600 hidden sm:block"></i>
+                        <div class="flex-1 bg-slate-900 p-3 rounded-xl border border-slate-800 text-center w-full">
+                            <div class="text-indigo-400 font-bold">2. GPT-4 / Teacher API</div>
+                            <div class="text-[11px] text-slate-400 mt-1">Generates Q&A pairs + Edge cases</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-slate-600 hidden sm:block"></i>
+                        <div class="flex-1 bg-slate-900 p-3 rounded-xl border border-slate-800 text-center w-full">
+                            <div class="text-emerald-400 font-bold">3. Cleaned SFT Dataset</div>
+                            <div class="text-[11px] text-slate-400 mt-1">ShareGPT formatted JSONL</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: HYPERPARAMETERS DEEP DIVE -->
+        <section id="tab-hyperparams" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="border-b border-slate-800 pb-4 mb-5">
+                    <span class="text-xs font-mono font-bold text-indigo-400 tracking-wider uppercase">LoRA & Optimizer Config Cheat Sheet</span>
+                    <h2 class="text-xl font-bold text-slate-100 mt-1">Hyperparameter Tuning & Math Calculator</h2>
+                    <p class="text-xs text-slate-400 mt-1">Tweak LoRA Rank ($r$), Alpha ($\alpha$), Learning Rate, and Batch Accumulation live.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Interactive Sliders / Inputs (7 cols) -->
+                    <div class="lg:col-span-7 bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-5">
+                        
+                        <!-- Rank r -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                                <label for="paramRank" class="text-slate-300">LoRA Rank ($r$)</label>
+                                <span id="paramRankVal" class="text-indigo-400 font-mono">16</span>
+                            </div>
+                            <input type="range" id="paramRank" min="4" max="128" step="4" value="16" oninput="updateHyperparams()" class="w-full accent-indigo-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Dimension of low-rank matrix. Higher $r$ captures more knowledge but increases VRAM.</p>
+                        </div>
+
+                        <!-- LoRA Alpha -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                                <label for="paramAlpha" class="text-slate-300">LoRA Alpha ($\alpha$)</label>
+                                <span id="paramAlphaVal" class="text-indigo-400 font-mono">32</span>
+                            </div>
+                            <input type="range" id="paramAlpha" min="8" max="256" step="8" value="32" oninput="updateHyperparams()" class="w-full accent-indigo-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Scaling factor ($\alpha / r$). Standard rule of thumb: $\alpha = 2 \times r$.</p>
+                        </div>
+
+                        <!-- Learning Rate -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                                <label for="paramLR" class="text-slate-300">Learning Rate (LR)</label>
+                                <span id="paramLRVal" class="text-amber-400 font-mono">2e-4</span>
+                            </div>
+                            <select id="paramLR" onchange="updateHyperparams()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200">
+                                <option value="too-high">1e-2 (Too High - Loss Spike / Divergence)</option>
+                                <option value="optimal" selected>2e-4 (Optimal - Smooth Loss Decay)</option>
+                                <option value="too-low">1e-6 (Too Low - Barely Moves)</option>
+                            </select>
+                        </div>
+
+                        <!-- Batch Size & Grad Accumulation -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="paramMicroBatch" class="block text-xs font-bold text-slate-300 mb-1">Per-Device Batch Size</label>
+                                <input type="number" id="paramMicroBatch" value="2" min="1" max="16" oninput="updateHyperparams()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200">
+                            </div>
+                            <div>
+                                <label for="paramGradAccum" class="block text-xs font-bold text-slate-300 mb-1">Grad Accumulation Steps</label>
+                                <input type="number" id="paramGradAccum" value="4" min="1" max="32" oninput="updateHyperparams()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Real-Time Metrics Summary Card (5 cols) -->
+                    <div class="lg:col-span-5 bg-slate-950 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-calculator text-indigo-400"></i> Effective Parameters & Batch
+                            </h3>
+
+                            <div class="space-y-3 font-mono text-xs">
+                                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
+                                    <span class="text-slate-400">Scaling Ratio ($\alpha / r$):</span>
+                                    <span id="calcScalingRatio" class="font-bold text-indigo-400">2.0</span>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
+                                    <span class="text-slate-400">Effective Batch Size:</span>
+                                    <span id="calcEBS" class="font-bold text-emerald-400">8</span>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center">
+                                    <span class="text-slate-400">Trainable Parameters:</span>
+                                    <span id="calcTrainableParams" class="font-bold text-sky-400">20.97 M (0.26%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Learning Rate Visualization Box -->
+                        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Learning Rate Behavior</span>
+                            <div id="lrDescText" class="text-xs text-emerald-400 font-medium">
+                                ✅ Smooth decay curve. Model learns patterns without collapsing gradients.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: METRICS DIAGNOSTIC DURING TRAINING -->
+        <section id="tab-diagnostics" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-xs font-mono font-bold text-rose-400 tracking-wider uppercase">Live Training Monitor</span>
+                        <h2 class="text-xl font-bold text-slate-100 mt-1">Metrics Diagnostic & Loss Curves</h2>
+                        <p class="text-xs text-slate-400 mt-1">Diagnose Healthy Training, Overfitting (memorized), and Underfitting in real-time.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="setLossScenario('healthy')" id="btnScenarioHealthy" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs transition">Healthy Training</button>
+                        <button onclick="setLossScenario('overfitting')" id="btnScenarioOverfitting" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition">Overfitting</button>
+                        <button onclick="setLossScenario('underfitting')" id="btnScenarioUnderfitting" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition">Underfitting</button>
+                    </div>
+                </div>
+
+                <!-- Loss Chart & Diagnostic Panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Chart Canvas (8 cols) -->
+                    <div class="lg:col-span-8 bg-slate-950 p-4 rounded-2xl border border-slate-800 relative min-h-[300px]">
+                        <canvas id="lossChartCanvas"></canvas>
+                    </div>
+
+                    <!-- Scenario Action Matrix (4 cols) -->
+                    <div class="lg:col-span-4 bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span id="diagnosticStatusDot" class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <h3 id="diagnosticTitle" class="font-bold text-sm text-slate-200">Healthy Training Detected</h3>
+                            </div>
+
+                            <p id="diagnosticDesc" class="text-xs text-slate-400 leading-relaxed mb-4">
+                                Train Loss and Validation Loss are decreasing together smoothly. The model is generalizing well to unseen prompts.
+                            </p>
+
+                            <div class="space-y-2 text-xs">
+                                <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                                    <span class="text-slate-400 font-bold block text-[10px] uppercase">Recommended Action:</span>
+                                    <span id="diagnosticAction" class="text-emerald-400 font-mono font-bold">Proceed with epoch completion & save LoRA adapter checkpoint.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-900 text-[11px] text-slate-500">
+                            💡 Rule of thumb: Universal SFT works best in 1 to 3 epochs.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: CODE WALKTHROUGH & DEPLOYMENT -->
+        <section id="tab-code" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="border-b border-slate-800 pb-4 mb-5 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <span class="text-xs font-mono font-bold text-cyan-400 tracking-wider uppercase">Unsloth Fine-Tuning Pipeline & Java Deployment</span>
+                        <h2 class="text-xl font-bold text-slate-100 mt-1">8-Step Code Walkthrough & Spring AI Integration</h2>
+                        <p class="text-xs text-slate-400 mt-1">From model loading and LoRA attachment to GGUF Ollama export and Java Spring AI consumption.</p>
+                    </div>
+
+                    <div class="flex gap-2 text-xs font-bold">
+                        <button onclick="setCodeMode('python')" id="btnCodePython" class="px-3 py-1.5 rounded-xl bg-cyan-600 text-white transition">Python (Unsloth)</button>
+                        <button onclick="setCodeMode('java')" id="btnCodeJava" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 transition">Spring AI (Java)</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- 8 Steps Vertical Navigator (4 cols) -->
+                    <div id="stepsListContainer" class="lg:col-span-4 space-y-2 custom-scrollbar max-h-[420px] overflow-y-auto pr-1">
+                        <div onclick="selectCodeStep(1)" id="codeStep1" class="step-item active p-3 rounded-xl bg-slate-950 border border-cyan-500/50 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-cyan-400">STEP 1</div>
+                            <div class="font-bold text-xs text-slate-200">Load Quantized Model (`from_pretrained`)</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(2)" id="codeStep2" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 2</div>
+                            <div class="font-bold text-xs text-slate-300">Attach LoRA Adapters (Target ALL layers)</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(3)" id="codeStep3" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 3</div>
+                            <div class="font-bold text-xs text-slate-300">Prepare Dataset (Template Formatting)</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(4)" id="codeStep4" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 4</div>
+                            <div class="font-bold text-xs text-slate-300">Configure SFTTrainer</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(5)" id="codeStep5" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 5</div>
+                            <div class="font-bold text-xs text-slate-300">TRAIN! (`trainer.train()`)</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(6)" id="codeStep6" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 6</div>
+                            <div class="font-bold text-xs text-slate-300">Test Fast Inference</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(7)" id="codeStep7" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 7</div>
+                            <div class="font-bold text-xs text-slate-300">Save LoRA Adapter Checkpoint</div>
+                        </div>
+
+                        <div onclick="selectCodeStep(8)" id="codeStep8" class="step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60">
+                            <div class="text-[10px] font-mono font-bold text-slate-500">STEP 8</div>
+                            <div class="font-bold text-xs text-slate-300">Export to GGUF & Deploy to Ollama / Spring AI</div>
+                        </div>
+                    </div>
+
+                    <!-- Code Display Box (8 cols) -->
+                    <div class="lg:col-span-8 bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col">
+                        <div class="flex justify-between items-center mb-2">
+                            <span id="codeBoxTitle" class="text-xs font-mono font-bold text-cyan-400">Python Script Walkthrough</span>
+                            <button onclick="copyCodeSnippet()" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-xs font-bold text-slate-300 rounded-lg border border-slate-800 transition">
+                                <i class="fa-solid fa-copy mr-1"></i> Copy Code
+                            </button>
+                        </div>
+                        <pre id="codeSnippetBox" class="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs font-mono text-slate-200 overflow-x-auto flex-1 custom-scrollbar min-h-[300px] leading-relaxed">
+<!-- Code dynamic content -->
+                        </pre>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 7: ENGINEER CAREER LAB & SCENARIOS -->
+        <section id="tab-challenges" class="tab-panel hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 glow-box">
+                <div class="border-b border-slate-800 pb-4 mb-5 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-mono font-bold text-purple-400 tracking-wider uppercase">Gamified Diagnostic Lab</span>
+                        <h2 class="text-xl font-bold text-slate-100 mt-1">GenAI Engineer Scenario Challenges</h2>
+                        <p class="text-xs text-slate-400 mt-1">Solve real-world engineering bugs: VRAM Out-of-Memory, loss divergence, and Spring AI binding.</p>
+                    </div>
+
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400">Engineer Level:</span>
+                        <div id="userEngineerLevel" class="text-sm font-extrabold text-purple-400">Senior LLM Tuner</div>
+                    </div>
+                </div>
+
+                <!-- Scenario Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <!-- Challenge 1 -->
+                    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300">CRISIS 1</span>
+                            <h3 class="font-bold text-sm text-slate-200 mt-2">CUDA Out Of Memory (OOM) on 16GB GPU</h3>
+                            <p class="text-xs text-slate-400 mt-1">Standard PEFT training Llama 3 crashes with 22GB allocation needed.</p>
+                        </div>
+                        <button onclick="triggerChallenge(1)" class="mt-4 w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl transition">
+                            Resolve Bug
+                        </button>
+                    </div>
+
+                    <!-- Challenge 2 -->
+                    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">CRISIS 2</span>
+                            <h3 class="font-bold text-sm text-slate-200 mt-2">Loss Curves Diverging / Repetitive Output</h3>
+                            <p class="text-xs text-slate-400 mt-1">Validation loss increases after epoch 2 while training loss drops near zero.</p>
+                        </div>
+                        <button onclick="triggerChallenge(2)" class="mt-4 w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl transition">
+                            Diagnose Overfit
+                        </button>
+                    </div>
+
+                    <!-- Challenge 3 -->
+                    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">DEPLOYS</span>
+                            <h3 class="font-bold text-sm text-slate-200 mt-2">Spring AI Integration Failure</h3>
+                            <p class="text-xs text-slate-400 mt-1">Java app cannot map fine-tuned model endpoint (`ft:gpt-4o-mini:support-bot`).</p>
+                        </div>
+                        <button onclick="triggerChallenge(3)" class="mt-4 w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl transition">
+                            Fix Java Client
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CHALLENGE MODAL -->
+    <div id="modalChallenge" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modalChallengeTitle" class="font-bold text-slate-100">Engineering Scenario</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-200 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="modalChallengeDesc" class="text-xs text-slate-300 leading-relaxed"></p>
+            <div id="modalChallengeChoices" class="space-y-2 pt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        /* Global App State */
+        let state = {
+            activeTab: 'pipeline',
+            currentModel: 'llama3-8b',
+            datasetFormat: 'alpaca',
+            codeStep: 1,
+            codeMode: 'python',
+            hyperparams: {
+                rank: 16,
+                alpha: 32,
+                lr: 'optimal',
+                microBatch: 2,
+                gradAccum: 4
+            },
+            lossScenario: 'healthy',
+            chartInstance: null
+        };
+
+        const MODEL_SPECS = {
+            'llama3-8b': { name: 'Llama 3 (8B)', stdVram: 22.4, unslothVram: 8.2, stdTime: 8.0, unslothTime: 2.9, stdTok: 1250, unslothTok: 3375 },
+            'mistral-7b': { name: 'Mistral (7B)', stdVram: 20.8, unslothVram: 7.6, stdTime: 7.2, unslothTime: 2.6, stdTok: 1380, unslothTok: 3720 },
+            'gemma-7b': { name: 'Gemma (7B)', stdVram: 21.5, unslothVram: 7.9, stdTime: 7.5, unslothTime: 2.7, stdTok: 1310, unslothTok: 3537 },
+            'phi3-3b': { name: 'Phi-3 (3.8B)', stdVram: 12.2, unslothVram: 4.8, stdTime: 4.1, unslothTime: 1.5, stdTok: 2200, unslothTok: 5940 },
+            'qwen2-7b': { name: 'Qwen 2 (7B)', stdVram: 20.5, unslothVram: 7.5, stdTime: 7.1, unslothTime: 2.5, stdTok: 1400, unslothTok: 3780 },
+            'deepseek-7b': { name: 'DeepSeek R1 (7B)', stdVram: 21.2, unslothVram: 7.8, stdTime: 7.4, unslothTime: 2.7, stdTok: 1330, unslothTok: 3591 }
+        };
+
+        const CODE_STEPS_PYTHON = {
+            1: `# STEP 1: Load quantized base model with Unsloth FastLanguageModel
+from unsloth import FastLanguageModel
+import torch
+
+max_seq_length = 2048
+dtype = None # Auto detection
+load_in_4bit = True # Enable 4-bit quantization (QLoRA)
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/llama-3-8b-Instruct-bnb-4bit",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    load_in_4bit = load_in_4bit,
+)`,
+            2: `# STEP 2: Attach LoRA adapters to ALL linear layers
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16, # LoRA Rank
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"], # Target ALL layers!
+    lora_alpha = 32,
+    lora_dropout = 0, # Unsloth supports 0 dropout for Triton optimization
+    bias = "none",
+    use_gradient_checkpointing = "unsloth", # 30% VRAM saving
+)`,
+            3: `# STEP 3: Format Dataset (Unsloth Standard Collator)
+from unsloth import standardize_sharegpt
+dataset = standardize_sharegpt(dataset)
+
+def formatting_prompts_func(examples):
+    texts = [tokenizer.apply_chat_template(convo, tokenize=False) for convo in examples["messages"]]
+    return { "text" : texts }
+
+dataset = dataset.map(formatting_prompts_func, batched = True)`,
+            4: `# STEP 4: Configure SFTTrainer
+from trl import SFTTrainer
+from transformers import TrainingArguments
+from unsloth import is_bfloat16_supported
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    dataset_text_field = "text",
+    max_seq_length = max_seq_length,
+    dataset_num_proc = 2,
+    packing = False, # Can make training 5x faster for short sequences
+    args = TrainingArguments(
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 60,
+        learning_rate = 2e-4,
+        fp16 = not is_bfloat16_supported(),
+        bf16 = is_bfloat16_supported(),
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        output_dir = "outputs",
+    ),
+)`,
+            5: `# STEP 5: TRAIN!
+trainer_stats = trainer.train()
+print(f"Training completed! Peak VRAM: {torch.cuda.max_memory_reserved() / 1e9:.2f} GB")`,
+            6: `# STEP 6: Test Fast Inference
+FastLanguageModel.for_inference(model) # Enables 2x faster inference
+inputs = tokenizer(
+[
+    "<|im_start|>user\\nHow do I configure Spring AI fine-tuned endpoints?<|im_end|>\\n<|im_start|>assistant\\n"
+], return_tensors = "pt").to("cuda")
+
+outputs = model.generate(**inputs, max_new_tokens = 128, use_cache = True)
+print(tokenizer.batch_decode(outputs))`,
+            7: `# STEP 7: Save LoRA Adapter Checkpoint
+model.save_pretrained("lora_model") # Local saving
+tokenizer.save_pretrained("lora_model")`,
+            8: `# STEP 8: Export to GGUF for Ollama & llama.cpp
+# Save to 8bit q8_0 GGUF format
+model.save_pretrained_gguf("model_gguf", tokenizer, quantization_method = "q8_0")
+# Now load directly into Ollama:
+# $ ollama create acme-support-bot -f Modelfile`
+        };
+
+        const CODE_STEPS_JAVA = {
+            1: `// SPRING AI: CONSUMING A FINE-TUNED MODEL
+// Option A: OpenAI Fine-Tuned Model Mapping
+package com.acme.ai;
+
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AiConfig {
+
+    @Bean
+    public OpenAiApi openAiApi() {
+        return new OpenAiApi(System.getenv("OPENAI_API_KEY"));
+    }
+
+    @Bean
+    public OpenAiChatModel fineTunedChatModel(OpenAiApi openAiApi) {
+        // Directing Spring AI to consume your custom fine-tuned model ID
+        return new OpenAiChatModel(openAiApi, 
+            OpenAiChatOptions.builder()
+                .withModel("ft:gpt-4o-mini:acme-support-bot")
+                .withTemperature(0.2)
+                .build());
+    }
+}`,
+            8: `// Option B: Consuming Local GGUF via Ollama in Spring AI
+package com.acme.ai;
+
+import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.ollama.api.OllamaApi;
+import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.stereotype.Service;
+
+@Service
+public class SupportBotService {
+
+    private final OllamaChatModel chatModel;
+
+    public SupportBotService(OllamaApi ollamaApi) {
+        this.chatModel = new OllamaChatModel(ollamaApi,
+            OllamaOptions.create()
+                .withModel("acme-support-bot") // Fine-tuned Ollama export!
+                .withTemperature(0.3));
+    }
+
+    public String askSupportBot(String userQuery) {
+        return chatModel.call(userQuery);
+    }
+}`
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            runUnslothBenchmark();
+            setDatasetFormat('alpaca');
+            updateHyperparams();
+            selectCodeStep(1);
+        });
+
+        /* Tab Switcher */
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tabNav-${tabId}`);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-slate-400');
+
+            if (tabId === 'diagnostics' && state.chartInstance) {
+                state.chartInstance.resize();
+            }
+        }
+
+        /* 3-Stage Pipeline Simulation */
+        function runPipelineStage(stageNum) {
+            const c1 = document.getElementById('stageCard1');
+            const c2 = document.getElementById('stageCard2');
+            const c3 = document.getElementById('stageCard3');
+
+            [c1, c2, c3].forEach(c => c.classList.remove('border-sky-400', 'border-indigo-400', 'border-emerald-400', 'ring-2'));
+
+            if (stageNum === 1) {
+                c1.classList.add('border-sky-400', 'ring-2', 'ring-sky-500/50');
+            } else if (stageNum === 2) {
+                c2.classList.add('border-indigo-400', 'ring-2', 'ring-indigo-500/50');
+            } else if (stageNum === 3) {
+                c3.classList.add('border-emerald-400', 'ring-2', 'ring-emerald-500/50');
+            }
+        }
+
+        function testPipelinePrompt() {
+            const input = document.getElementById('pipelineTestInput').value;
+            
+            document.getElementById('stage1Output').innerText = `"${input} Power is energy. Atomic power uses uranium-235. Next sentence: To make tea, boil water..." (Next-token unconstrained stream)`;
+            document.getElementById('stage2Output').innerText = `"Here is how atomic power works: Fission splits heavy atoms releasing heat to turn steam turbines. Steps to build reactor: 1. Obtain enriched fuel, 2. Construct core..." (Direct answer provided without safety filter)`;
+            document.getElementById('stage3Output').innerText = `"Atomic power generates electricity through nuclear fission in a controlled environment. I cannot provide instructions or schematics for constructing nuclear reactors, as that presents safety hazards." (Helpful & Aligned Refusal)`;
+        }
+
+        function runUnslothBenchmark() {
+            const mKey = document.getElementById('benchmarkModelSelect').value;
+            const spec = MODEL_SPECS[mKey];
+
+            document.getElementById('stdVramVal').innerText = `${spec.stdVram} GB`;
+            document.getElementById('stdVramBar').style.width = `${(spec.stdVram / 30) * 100}%`;
+            document.getElementById('stdTimeVal').innerText = `${spec.stdTime} Hours`;
+            document.getElementById('stdSpeedVal').innerText = `${spec.stdTok.toLocaleString()} tok/s`;
+
+            document.getElementById('unslothVramVal').innerText = `${spec.unslothVram} GB`;
+            document.getElementById('unslothVramBar').style.width = `${(spec.unslothVram / 30) * 100}%`;
+            document.getElementById('unslothTimeVal').innerText = `${spec.unslothTime} Hours`;
+            document.getElementById('unslothSpeedVal').innerText = `${spec.unslothTok.toLocaleString()} tok/s`;
+        }
+
+        /* Dataset Formats Lab */
+        function setDatasetFormat(format) {
+            state.datasetFormat = format;
+            const btnA = document.getElementById('btnFormatAlpaca');
+            const btnS = document.getElementById('btnFormatShareGPT');
+            const box = document.getElementById('datasetCodeView');
+
+            if (format === 'alpaca') {
+                btnA.className = "px-2.5 py-1 rounded-md bg-indigo-600 text-white font-bold transition";
+                btnS.className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition";
+                box.innerHTML = `{
+  "instruction": "Explain quantum superposition in simple terms.",
+  "input": "Audience: 10 year old student",
+  "output": "Imagine a spinning coin. While it's spinning, it's both heads and tails at the same time until you catch it!"
+}`;
+            } else {
+                btnS.className = "px-2.5 py-1 rounded-md bg-indigo-600 text-white font-bold transition";
+                btnA.className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition";
+                box.innerHTML = `{
+  "conversations": [
+    { "from": "human", "value": "Explain quantum superposition." },
+    { "from": "gpt", "value": "It is a principle where a system exists in multiple states at once." },
+    { "from": "human", "value": "Give an everyday analogy." },
+    { "from": "gpt", "value": "A spinning coin before it lands!" }
+  ]
+}`;
+            }
+        }
+
+        function updateHyperparams() {
+            const rank = parseInt(document.getElementById('paramRank').value);
+            const alpha = parseInt(document.getElementById('paramAlpha').value);
+            const lr = document.getElementById('paramLR').value;
+            const microBatch = parseInt(document.getElementById('paramMicroBatch').value) || 1;
+            const gradAccum = parseInt(document.getElementById('paramGradAccum').value) || 1;
+
+            document.getElementById('paramRankVal').innerText = rank;
+            document.getElementById('paramAlphaVal').innerText = alpha;
+
+            const scaling = (alpha / rank).toFixed(1);
+            document.getElementById('calcScalingRatio').innerText = scaling;
+
+            const ebs = microBatch * gradAccum;
+            document.getElementById('calcEBS').innerText = `${ebs} (Effective Batch)`;
+
+            const approxParams = ((rank * 7 * 8 * 4096 * 2) / 1000000).toFixed(2);
+            document.getElementById('calcTrainableParams').innerText = `~${approxParams} M (~0.26%)`;
+
+            const lrDesc = document.getElementById('lrDescText');
+            if (lr === 'too-high') {
+                lrDesc.className = "text-xs text-rose-400 font-medium";
+                lrDesc.innerText = "❌ Divergence Risk: Loss spikes up or NaN gradient errors during backprop!";
+            } else if (lr === 'optimal') {
+                lrDesc.className = "text-xs text-emerald-400 font-medium";
+                lrDesc.innerText = "✅ Optimal: Smooth exponential loss decay curve.";
+            } else {
+                lrDesc.className = "text-xs text-amber-400 font-medium";
+                lrDesc.innerText = "⚠️ Too Low: Model loss barely moves; requires 10x more compute steps.";
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('lossChartCanvas').getContext('2d');
+            
+            state.chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Step 0', 'Step 10', 'Step 20', 'Step 30', 'Step 40', 'Step 50', 'Step 60'],
+                    datasets: [
+                        {
+                            label: 'Training Loss',
+                            data: [3.2, 2.1, 1.4, 0.9, 0.6, 0.4, 0.3],
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Validation Loss',
+                            data: [3.3, 2.2, 1.5, 1.0, 0.7, 0.5, 0.4],
+                            borderColor: '#34d399',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { family: 'Fira Code' } } },
+                        y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { family: 'Fira Code' } }, title: { display: true, text: 'Cross-Entropy Loss', color: '#9ca3af' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f3f4f6', font: { family: 'Plus Jakarta Sans' } } }
+                    }
+                }
+            });
+        }
+
+        function setLossScenario(scenario) {
+            state.lossScenario = scenario;
+            
+            const btnH = document.getElementById('btnScenarioHealthy');
+            const btnO = document.getElementById('btnScenarioOverfitting');
+            const btnU = document.getElementById('btnScenarioUnderfitting');
+
+            [btnH, btnO, btnU].forEach(b => b.className = "px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition");
+
+            if (scenario === 'healthy') {
+                btnH.className = "px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs transition";
+                state.chartInstance.data.datasets[0].data = [3.2, 2.1, 1.4, 0.9, 0.6, 0.4, 0.3];
+                state.chartInstance.data.datasets[1].data = [3.3, 2.2, 1.5, 1.0, 0.7, 0.5, 0.4];
+                
+                document.getElementById('diagnosticTitle').innerText = "Healthy Training Detected";
+                document.getElementById('diagnosticDesc').innerText = "Train Loss & Validation Loss are decreasing closely together. The model generalizes well to unseen prompts.";
+                document.getElementById('diagnosticAction').innerText = "Proceed with epoch completion & save LoRA adapter checkpoint.";
+                document.getElementById('diagnosticStatusDot').className = "w-3 h-3 rounded-full bg-emerald-400 animate-pulse";
+            } else if (scenario === 'overfitting') {
+                btnO.className = "px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs transition";
+                state.chartInstance.data.datasets[0].data = [3.2, 1.8, 0.9, 0.3, 0.1, 0.05, 0.02];
+                state.chartInstance.data.datasets[1].data = [3.3, 2.0, 1.6, 2.1, 2.8, 3.4, 4.1];
+                
+                document.getElementById('diagnosticTitle').innerText = "Overfitting Warning!";
+                document.getElementById('diagnosticDesc').innerText = "Train loss decreases low while Validation loss increases sharply! Model is memorizing training responses.";
+                document.getElementById('diagnosticAction').innerText = "Early stop training, lower LoRA Rank r, add LoRA Dropout or target fewer layers.";
+                document.getElementById('diagnosticStatusDot').className = "w-3 h-3 rounded-full bg-rose-500 animate-ping";
+            } else {
+                btnU.className = "px-3 py-1.5 rounded-xl bg-amber-600 text-white font-bold text-xs transition";
+                state.chartInstance.data.datasets[0].data = [3.2, 3.1, 3.0, 2.95, 2.9, 2.88, 2.85];
+                state.chartInstance.data.datasets[1].data = [3.3, 3.2, 3.1, 3.05, 3.0, 2.98, 2.95];
+                
+                document.getElementById('diagnosticTitle').innerText = "Underfitting / Plateauing";
+                document.getElementById('diagnosticDesc').innerText = "Both Train and Validation loss plateau at high values. Model has not learned domain patterns.";
+                document.getElementById('diagnosticAction').innerText = "Increase Learning Rate (e.g., 2e-4), increase LoRA Rank r, or train for more epochs.";
+                document.getElementById('diagnosticStatusDot').className = "w-3 h-3 rounded-full bg-amber-400 animate-pulse";
+            }
+
+            state.chartInstance.update();
+        }
+
+        function selectCodeStep(step) {
+            state.codeStep = step;
+            document.querySelectorAll('.step-item').forEach(el => {
+                el.className = "step-item p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer transition hover:bg-slate-800/60";
+            });
+
+            const activeItem = document.getElementById(`codeStep${step}`);
+            if (activeItem) {
+                activeItem.className = "step-item active p-3 rounded-xl bg-slate-950 border border-cyan-500/50 cursor-pointer transition hover:bg-slate-800/60";
+            }
+
+            renderCodeBox();
+        }
+
+        function setCodeMode(mode) {
+            state.codeMode = mode;
+            const btnP = document.getElementById('btnCodePython');
+            const btnJ = document.getElementById('btnCodeJava');
+
+            if (mode === 'python') {
+                btnP.className = "px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-bold transition";
+                btnJ.className = "px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 font-bold transition";
+            } else {
+                btnJ.className = "px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-bold transition";
+                btnP.className = "px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 font-bold transition";
+            }
+            renderCodeBox();
+        }
+
+        function renderCodeBox() {
+            const box = document.getElementById('codeSnippetBox');
+            const title = document.getElementById('codeBoxTitle');
+
+            if (state.codeMode === 'python') {
+                title.innerText = `Python (Unsloth QLoRA Pipeline) - Step ${state.codeStep}`;
+                box.textContent = CODE_STEPS_PYTHON[state.codeStep] || CODE_STEPS_PYTHON[1];
+            } else {
+                title.innerText = `Java Spring AI Integration`;
+                box.textContent = CODE_STEPS_JAVA[state.codeStep] || CODE_STEPS_JAVA[1];
+            }
+        }
+
+        function copyCodeSnippet() {
+            const text = document.getElementById('codeSnippetBox').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Code snippet copied to clipboard!");
+            });
+        }
+
+        function triggerChallenge(id) {
+            const modal = document.getElementById('modalChallenge');
+            const title = document.getElementById('modalChallengeTitle');
+            const desc = document.getElementById('modalChallengeDesc');
+            const choices = document.getElementById('modalChallengeChoices');
+
+            choices.innerHTML = "";
+
+            if (id === 1) {
+                title.innerText = "CRISIS 1: CUDA Out of Memory on 16GB VRAM";
+                desc.innerText = "You are fine-tuning a 8B model with PyTorch PEFT. The training crashes with: 'CUDA out of memory. Tried to allocate 22.40 GB'. How do you resolve this without buying a new GPU?";
+                
+                addChoice(choices, "A. Switch to Unsloth 4-bit QLoRA with Triton kernels", true, "Correct! Unsloth cuts memory footprint from 22.4GB down to 8.2GB, fitting easily on a 16GB GPU.");
+                addChoice(choices, "B. Increase per_device_train_batch_size to 32", false, "Incorrect! Increasing batch size increases memory consumption and makes OOM worse.");
+            } else if (id === 2) {
+                title.innerText = "CRISIS 2: Validation Loss Diverging / Overfitting";
+                desc.innerText = "After step 40, your validation loss goes from 1.0 up to 3.8 while training loss drops to 0.02. What is happening and how do you fix it?";
+                
+                addChoice(choices, "A. Overfitting. Stop training early and lower LoRA rank or add dropout.", true, "Correct! The model was memorizing training responses.");
+                addChoice(choices, "B. Underfitting. Train for 100 more epochs.", false, "Incorrect! Training longer will exacerbate overfitting.");
+            } else if (id === 3) {
+                title.innerText = "CRISIS 3: Spring AI Endpoint Mapping";
+                desc.innerText = "Your Java enterprise service needs to call your fine-tuned model deployed on local Ollama. What is the correct Spring AI setup?";
+                
+                addChoice(choices, "A. Use OllamaChatModel with .withModel('acme-support-bot')", true, "Correct! Spring AI connects natively to Ollama GGUF exports!");
+                addChoice(choices, "B. Hardcode raw HTTP GET requests without Spring AI abstraction", false, "Incorrect! Spring AI provides clean unified interfaces.");
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function addChoice(container, text, isCorrect, explanation) {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-200 transition font-medium";
+            btn.innerText = text;
+            btn.onclick = () => {
+                alert((isCorrect ? "✅ SUCCESS: " : "❌ INCORRECT: ") + explanation);
+                closeModal();
+            };
+            container.appendChild(btn);
+        }
+
+        function closeModal() {
+            document.getElementById('modalChallenge').classList.add('hidden');
+        }
+
+        function resetSimulator() {
+            state.hyperparams = { rank: 16, alpha: 32, lr: 'optimal', microBatch: 2, gradAccum: 4 };
+            document.getElementById('paramRank').value = 16;
+            document.getElementById('paramAlpha').value = 32;
+            document.getElementById('paramLR').value = 'optimal';
+            updateHyperparams();
+            setLossScenario('healthy');
+            switchTab('pipeline');
+        }
+    </script>
+</body>
+</html>
