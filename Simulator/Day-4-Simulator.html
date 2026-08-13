@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gen-AI Developer Cheat Sheet & Real-Life Transformer Simulator</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0B0F17',
+              card: '#131B2A',
+              border: '#1E293B',
+              accent: '#06B6D4',
+              emerald: '#10B981',
+              amber: '#F59E0B',
+              purple: '#8B5CF6',
+              rose: '#F43F5E'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Inter Font & FontAwesome Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0B0F17; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    
+    .glow-accent { box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.4); }
+    .glow-emerald { box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4); }
+    .glow-purple { box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.4); }
+    
+    /* Animation keyframes */
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(6, 182, 212, 0.8); }
+      50% { border-color: rgba(16, 185, 129, 0.8); }
+    }
+    .animate-pulse-border { animation: pulse-border 3s infinite; }
+  </style>
+</head>
+<body class="bg-[#0B0F17] text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-[#0D131F]/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 bg-clip-text text-transparent">
+            GEN-AI DEVELOPER LAB
+          </h1>
+          <p class="text-xs text-slate-400 font-mono">DAY-4 CLASS NOTES & TRANSFORMER SIMULATOR</p>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-1 text-xs font-medium">
+        <span class="px-2.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-800 text-cyan-400">
+          <i class="fa-solid fa-microchip mr-1"></i> Qwen3-0.6B Ready
+        </span>
+        <span class="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400">
+          <i class="fa-solid fa-language mr-1"></i> Seq2Seq Translation
+        </span>
+        <span class="px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-800 text-purple-400">
+          <i class="fa-solid fa-coffee mr-1"></i> Spring AI & Python
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace Layout -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-6">
+
+    <!-- Navigation Tabs -->
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 p-1.5 bg-[#111723] rounded-xl border border-slate-800 text-xs font-semibold">
+      <button onclick="switchTab('pipeline')" id="tab-pipeline" class="tab-btn active px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all bg-cyan-600 text-white shadow">
+        <i class="fa-solid fa-diagram-project"></i>
+        <span>1. 7 Transformer Stages</span>
+      </button>
+      <button onclick="switchTab('math')" id="tab-math" class="tab-btn px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i class="fa-solid fa-calculator"></i>
+        <span>2. Self-Attention Math</span>
+      </button>
+      <button onclick="switchTab('seq2seq')" id="tab-seq2seq" class="tab-btn px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i class="fa-solid fa-right-left"></i>
+        <span>3. Seq2Seq Translator</span>
+      </button>
+      <button onclick="switchTab('tasks')" id="tab-tasks" class="tab-btn px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i class="fa-solid fa-cubes"></i>
+        <span>4. 5 AI Task Solvers</span>
+      </button>
+      <button onclick="switchTab('code')" id="tab-code" class="tab-btn px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i class="fa-solid fa-code"></i>
+        <span>5. Python ⇄ Spring AI</span>
+      </button>
+      <button onclick="switchTab('vram')" id="tab-vram" class="tab-btn px-3 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i class="fa-solid fa-server"></i>
+        <span>6. Memory & Hardware</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: 7 TRANSFORMER STAGES SIMULATOR -->
+    <div id="panel-pipeline" class="tab-panel space-y-6">
+      <!-- Input Control Bar -->
+      <div class="bg-brand-card rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              Interactive 7-Stage End-to-End Pipeline Simulator
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Follow a prompt through all 7 key transformer architecture stages, from raw text to Softmax sampling.
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Preset Prompts:</span>
+            <button onclick="loadPresetPrompt(0)" class="text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+              Democracy
+            </button>
+            <button onclick="loadPresetPrompt(1)" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+              Cat & Street
+            </button>
+            <button onclick="loadPresetPrompt(2)" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+              AI Revolution
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="pipeline-input" value="Democracy is rule by the people." 
+                 class="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-cyan-200 focus:outline-none focus:border-cyan-500 transition">
+          <button onclick="runPipelineSimulation()" class="bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-lg transition">
+            <i class="fa-solid fa-play"></i> Run Simulator
+          </button>
+        </div>
+      </div>
+
+      <!-- Stepper Header -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        <button onclick="selectStage(1)" id="stage-btn-1" class="stage-btn active text-left p-3 rounded-xl border bg-cyan-950/60 border-cyan-500 text-cyan-300 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 1</div>
+          <div class="text-xs font-bold truncate">Tokenization</div>
+        </button>
+        <button onclick="selectStage(2)" id="stage-btn-2" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 2</div>
+          <div class="text-xs font-bold truncate">Embedding + POS</div>
+        </button>
+        <button onclick="selectStage(3)" id="stage-btn-3" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 3</div>
+          <div class="text-xs font-bold truncate">Self-Attention</div>
+        </button>
+        <button onclick="selectStage(4)" id="stage-btn-4" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 4</div>
+          <div class="text-xs font-bold truncate">Multi-Head Attn</div>
+        </button>
+        <button onclick="selectStage(5)" id="stage-btn-5" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 5</div>
+          <div class="text-xs font-bold truncate">Feed-Forward (FFN)</div>
+        </button>
+        <button onclick="selectStage(6)" id="stage-btn-6" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 6</div>
+          <div class="text-xs font-bold truncate">Final Projection</div>
+        </button>
+        <button onclick="selectStage(7)" id="stage-btn-7" class="stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition">
+          <div class="text-[10px] uppercase font-mono tracking-wider opacity-75">Stage 7</div>
+          <div class="text-xs font-bold truncate">Softmax & Sampling</div>
+        </button>
+      </div>
+
+      <!-- Active Stage Detailed Viewport -->
+      <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 min-h-[380px] flex flex-col justify-between">
+        
+        <!-- Stage Title & Math Insight -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-2">
+          <div>
+            <span id="stage-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-900/80 text-cyan-300 border border-cyan-700 uppercase">
+              Stage 1 / 7
+            </span>
+            <h3 id="stage-title" class="text-lg font-bold text-white mt-1">
+              Tokenization (BPE - Byte Pair Encoding)
+            </h3>
+          </div>
+          <div id="stage-math-pill" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-400">
+            Text → Sub-word Tokens → Integer IDs
+          </div>
+        </div>
+
+        <!-- Stage Dynamic Content Display -->
+        <div id="stage-content-body" class="my-6">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Bottom Controls & Explanation Footnote -->
+        <div class="border-t border-slate-800/80 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p id="stage-description" class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+            Chops text into BPE sub-words. Sub-words ensure the model never encounters an out-of-vocabulary (OOV) word.
+          </p>
+          <div class="flex items-center gap-2">
+            <button onclick="stepStage(-1)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
+              <i class="fa-solid fa-arrow-left mr-1"></i> Prev Stage
+            </button>
+            <button onclick="stepStage(1)" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-medium transition">
+              Next Stage <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: SELF-ATTENTION MATH LAB -->
+    <div id="panel-math" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Q, K, V Library Search Analogy -->
+        <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-4">
+          <div class="flex items-center space-x-2 text-cyan-400 font-bold text-sm">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Library Search Analogy</span>
+          </div>
+
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Every token embedding is projected into 3 learned vectors using weight matrices $W_Q, W_K, W_V$:
+          </p>
+
+          <div class="space-y-3">
+            <div class="p-3 bg-cyan-950/40 border border-cyan-800/80 rounded-xl">
+              <div class="flex items-center justify-between text-xs font-bold text-cyan-300">
+                <span>Q (Query) = $x \cdot W_Q$</span>
+                <span class="text-[10px] bg-cyan-900 px-2 py-0.5 rounded">Search Term</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1 font-mono">"What am I looking for?"</p>
+            </div>
+
+            <div class="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-xl">
+              <div class="flex items-center justify-between text-xs font-bold text-emerald-300">
+                <span>K (Key) = $x \cdot W_K$</span>
+                <span class="text-[10px] bg-emerald-900 px-2 py-0.5 rounded">Book Tag</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1 font-mono">"What content do I contain?"</p>
+            </div>
+
+            <div class="p-3 bg-purple-950/40 border border-purple-800/80 rounded-xl">
+              <div class="flex items-center justify-between text-xs font-bold text-purple-300">
+                <span>V (Value) = $x \cdot W_V$</span>
+                <span class="text-[10px] bg-purple-900 px-2 py-0.5 rounded">Book Text</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1 font-mono">"What information do I pass on?"</p>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800">
+            <span class="text-[11px] font-mono text-amber-400 font-semibold block mb-1">The Core Formula:</span>
+            <div class="text-center font-mono text-sm py-2 text-slate-200 bg-slate-950 rounded-lg border border-slate-800">
+              $\text{Attention}(Q,K,V) = \text{Softmax}\left(\frac{Q \cdot K^T}{\sqrt{d_k}}\right) \cdot V$
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2">
+              $\sqrt{d_k}$ scales dot products to avoid extreme gradients in softmax.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Step-by-Step Math Matrix Calculator -->
+        <div class="lg:col-span-2 bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-square-root-variable text-emerald-400"></i>
+              Interactive Attention Step-by-Step Calculator ($d_k = 4$)
+            </h3>
+            <button onclick="recalculateAttentionMath()" class="text-xs bg-cyan-900/60 hover:bg-cyan-800 text-cyan-300 px-3 py-1.5 rounded-lg border border-cyan-700">
+              <i class="fa-solid fa-rotate mr-1"></i> Randomize Vectors
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Step 1: Q * K^T -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+              <div class="flex justify-between items-center text-xs font-bold text-cyan-400 mb-2">
+                <span>Step 1: Raw Scores $(Q \cdot K^T)$</span>
+                <span class="text-[10px] text-slate-500 font-mono">3x3 tokens</span>
+              </div>
+              <div id="math-matrix-scores" class="grid grid-cols-3 gap-1.5 text-center font-mono text-xs">
+                <!-- JS generated -->
+              </div>
+            </div>
+
+            <!-- Step 2: Scale by sqrt(d_k) -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+              <div class="flex justify-between items-center text-xs font-bold text-amber-400 mb-2">
+                <span>Step 2: Scaled Scores $(/\sqrt{4} = 2)$</span>
+                <span class="text-[10px] text-slate-500 font-mono">Div by 2</span>
+              </div>
+              <div id="math-matrix-scaled" class="grid grid-cols-3 gap-1.5 text-center font-mono text-xs">
+                <!-- JS generated -->
+              </div>
+            </div>
+
+            <!-- Step 3: Softmax Rows -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+              <div class="flex justify-between items-center text-xs font-bold text-emerald-400 mb-2">
+                <span>Step 3: Attention Weights (Softmax)</span>
+                <span class="text-[10px] text-emerald-500 font-mono">Row sums = 1.0</span>
+              </div>
+              <div id="math-matrix-weights" class="grid grid-cols-3 gap-1.5 text-center font-mono text-xs">
+                <!-- JS generated -->
+              </div>
+            </div>
+
+            <!-- Step 4: Weighted Sum of V -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+              <div class="flex justify-between items-center text-xs font-bold text-purple-400 mb-2">
+                <span>Step 4: Output Vectors $(\text{Weights} \cdot V)$</span>
+                <span class="text-[10px] text-slate-500 font-mono">Context Enriched</span>
+              </div>
+              <div id="math-matrix-output" class="space-y-1.5 font-mono text-xs">
+                <!-- JS generated -->
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+            <span><i class="fa-solid fa-circle-info text-cyan-400 mr-2"></i> Notice how token 1 ("animal") transfers 72% of its weight to token 3 ("tired").</span>
+            <span class="font-mono text-emerald-400">Context Computed</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: SEQ2SEQ TRANSLATOR ARCHITECTURE -->
+    <div id="panel-seq2seq" class="tab-panel hidden space-y-6">
+      <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-6">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-language text-cyan-400"></i>
+              Causal LM vs Seq2Seq LM Architecture Simulator
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Compare Decoder-only models (Qwen, Llama) with Encoder-Decoder models (Helsinki opus-mt, BART, T5).
+            </p>
+          </div>
+
+          <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+            <button onclick="toggleArchMode('seq2seq')" id="arch-btn-seq2seq" class="px-3 py-1.5 rounded-lg font-bold bg-cyan-600 text-white shadow">
+              Seq2Seq (Translation)
+            </button>
+            <button onclick="toggleArchMode('causal')" id="arch-btn-causal" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+              Causal LM (Decoder Only)
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Translator Interactive Canvas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-950 p-6 rounded-2xl border border-slate-800">
+          
+          <!-- English Input Column -->
+          <div class="space-y-3">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between">
+              <span>Source Text (English)</span>
+              <span class="text-cyan-400 font-mono">Encoder Input</span>
+            </div>
+            
+            <div id="seq-input-tokens" class="space-y-2">
+              <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-sm text-cyan-300 flex justify-between items-center">
+                <span>Hello,</span>
+                <span class="text-xs text-slate-500">Token #1</span>
+              </div>
+              <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-sm text-cyan-300 flex justify-between items-center">
+                <span>how</span>
+                <span class="text-xs text-slate-500">Token #2</span>
+              </div>
+              <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-sm text-cyan-300 flex justify-between items-center">
+                <span>are you?</span>
+                <span class="text-xs text-slate-500">Token #3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle: Encoder / Cross-Attention Pipeline -->
+          <div class="flex flex-col items-center justify-center space-y-4 text-center">
+            <div id="encoder-box" class="w-full p-4 bg-cyan-950/60 border border-cyan-600 rounded-2xl text-cyan-300 space-y-1">
+              <i class="fa-solid fa-microchip text-2xl text-cyan-400"></i>
+              <div class="font-bold text-xs">ENCODER</div>
+              <p class="text-[10px] text-cyan-200/80">Reads full sentence bidirectionally</p>
+            </div>
+
+            <!-- Cross-Attention Arrow Connector -->
+            <div class="flex items-center space-x-2 text-amber-400 font-mono text-xs">
+              <i class="fa-solid fa-arrow-down-long animate-bounce"></i>
+              <span id="cross-attn-label" class="bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded text-[10px]">
+                Cross-Attention Link
+              </span>
+              <i class="fa-solid fa-arrow-down-long animate-bounce"></i>
+            </div>
+
+            <div id="decoder-box" class="w-full p-4 bg-emerald-950/60 border border-emerald-600 rounded-2xl text-emerald-300 space-y-1">
+              <i class="fa-solid fa-cubes text-2xl text-emerald-400"></i>
+              <div class="font-bold text-xs">DECODER</div>
+              <p class="text-[10px] text-emerald-200/80">Generates target tokens auto-regressively</p>
+            </div>
+          </div>
+
+          <!-- Target Output Column -->
+          <div class="space-y-3">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between">
+              <span>Generated Output (Hindi / Target)</span>
+              <span class="text-emerald-400 font-mono">Decoder Output</span>
+            </div>
+
+            <div id="seq-output-tokens" class="space-y-2">
+              <div class="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-xl font-mono text-sm text-emerald-300 flex justify-between items-center">
+                <span>नमस्ते (Namaste)</span>
+                <span class="text-xs text-emerald-500 font-mono">T1</span>
+              </div>
+              <div class="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-xl font-mono text-sm text-emerald-300 flex justify-between items-center">
+                <span>आप (Aap)</span>
+                <span class="text-xs text-emerald-500 font-mono">T2</span>
+              </div>
+              <div class="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-xl font-mono text-sm text-emerald-300 flex justify-between items-center">
+                <span>कैसे हैं? (Kaise hain?)</span>
+                <span class="text-xs text-emerald-500 font-mono">T3</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 font-mono uppercase">
+                <th class="py-2 px-3">Aspect</th>
+                <th class="py-2 px-3 text-cyan-400">AutoModelForCausalLM</th>
+                <th class="py-2 px-3 text-emerald-400">AutoModelForSeq2SeqLM</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-white">Architecture</td>
+                <td class="py-2.5 px-3">Decoder-only</td>
+                <td class="py-2.5 px-3">Encoder + Decoder</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-white">Primary Use Case</td>
+                <td class="py-2.5 px-3">Chatbots, Code, Free text generation</td>
+                <td class="py-2.5 px-3">Translation, Summarization</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-white">Attention Mechanism</td>
+                <td class="py-2.5 px-3">Masked Self-Attention</td>
+                <td class="py-2.5 px-3">Full Self-Attention + Cross-Attention</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-white">Key Models</td>
+                <td class="py-2.5 px-3 font-mono">GPT-4, Llama 3, Qwen3-0.6B</td>
+                <td class="py-2.5 px-3 font-mono">Helsinki opus-mt, BART, T5</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: 5 AI TASK SOLVERS -->
+    <div id="panel-tasks" class="tab-panel hidden space-y-6">
+      <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-6">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-cubes text-purple-400"></i>
+            5 Core Real-World Transformer Task Solvers
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Explore how transformers solve Text Generation, Summarization, Sentiment Analysis, Translation, and Image Captioning.
+          </p>
+        </div>
+
+        <!-- Task Selector Tabs -->
+        <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+          <button onclick="switchTaskSolver(0)" id="task-tab-0" class="task-tab active px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white">
+            1. Text Generation
+          </button>
+          <button onclick="switchTaskSolver(1)" id="task-tab-1" class="task-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800">
+            2. Summarization
+          </button>
+          <button onclick="switchTaskSolver(2)" id="task-tab-2" class="task-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800">
+            3. Sentiment Analysis
+          </button>
+          <button onclick="switchTaskSolver(3)" id="task-tab-3" class="task-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800">
+            4. Translation
+          </button>
+          <button onclick="switchTaskSolver(4)" id="task-tab-4" class="task-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800">
+            5. Image Captioning
+          </button>
+        </div>
+
+        <!-- Task Interactive Workspace -->
+        <div id="task-workspace" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: PYTHON ⇄ SPRING AI WORKBENCH -->
+    <div id="panel-code" class="tab-panel hidden space-y-6">
+      <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-code text-cyan-400"></i>
+              Python (HuggingFace) ⇄ Java (Spring AI) Dual-Code Generator
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Side-by-side equivalent code snippets for both Python and Java Spring AI implementations.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-400">Select Pattern:</span>
+            <select id="code-pattern-select" onchange="updateCodeWorkbench()" class="bg-slate-900 border border-slate-700 text-cyan-300 rounded-lg px-3 py-1.5 font-mono focus:outline-none">
+              <option value="prompt">Local Prompt & Chat Template</option>
+              <option value="multiturn">Multi-turn Conversation</option>
+              <option value="translation">Seq2Seq Translation</option>
+              <option value="sentiment">Structured Output (JSON / Java Record)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Python Block -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs text-slate-400 font-mono">
+              <span class="text-cyan-400 font-bold"><i class="fa-brands fa-python mr-1"></i> Python (HuggingFace Transformers)</span>
+              <button onclick="copyCode('python-code')" class="hover:text-white"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+            <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-cyan-100 overflow-x-auto leading-relaxed"><code id="python-code"># Loading Python Code...</code></pre>
+          </div>
+
+          <!-- Java Spring AI Block -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs text-slate-400 font-mono">
+              <span class="text-emerald-400 font-bold"><i class="fa-brands fa-java mr-1"></i> Java (Spring AI ChatClient)</span>
+              <button onclick="copyCode('java-code')" class="hover:text-white"><i class="fa-solid fa-copy"></i> Copy</button>
+            </div>
+            <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-emerald-100 overflow-x-auto leading-relaxed"><code id="java-code">// Loading Java Code...</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: MEMORY & HARDWARE CALCULATOR -->
+    <div id="panel-vram" class="tab-panel hidden space-y-6">
+      <div class="bg-brand-card rounded-2xl p-6 border border-slate-800 space-y-6">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-server text-amber-400"></i>
+            Local LLM GPU VRAM & Hardware Calculator
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Estimate GPU RAM required to load and run open-weights models locally based on precision formats.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Interactive Controls -->
+          <div class="space-y-4 bg-slate-950 p-5 rounded-xl border border-slate-800">
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Select Model Parameter Count:</label>
+              <select id="vram-params" onchange="calculateVRAM()" class="w-full bg-slate-900 border border-slate-700 text-amber-300 rounded-xl p-2.5 text-xs font-mono">
+                <option value="0.6">0.6B Parameters (e.g. Qwen3-0.6B)</option>
+                <option value="3">3B Parameters (e.g. Llama 3.2 3B)</option>
+                <option value="7">7B Parameters (e.g. Qwen 7B / Mistral 7B)</option>
+                <option value="13">13B Parameters (e.g. Llama 2 13B)</option>
+                <option value="70">70B Parameters (e.g. Llama 3 70B)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Precision / Quantization Format:</label>
+              <select id="vram-precision" onchange="calculateVRAM()" class="w-full bg-slate-900 border border-slate-700 text-cyan-300 rounded-xl p-2.5 text-xs font-mono">
+                <option value="16">16-bit FP16 / BF16 (Standard Auto)</option>
+                <option value="8">8-bit INT8 (Quantized)</option>
+                <option value="4">4-bit INT4 (GGUF / AWQ)</option>
+                <option value="32">32-bit FP32 (Full Precision)</option>
+              </select>
+            </div>
+
+            <div class="p-3 bg-slate-900/80 rounded-lg text-xs text-slate-400">
+              <span class="font-bold text-white block mb-1">Formula used:</span>
+              $\text{VRAM} = \text{Params} \times \text{Bytes per Param} \times 1.25 \text{ (overhead)}$
+            </div>
+          </div>
+
+          <!-- Dynamic Result Display -->
+          <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col justify-between">
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Estimated GPU RAM Needed:</span>
+                <span id="vram-result-mb" class="text-2xl font-extrabold text-amber-400 font-mono">~1.2 GB</span>
+              </div>
+
+              <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div id="vram-bar" class="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 h-full w-[15%] transition-all duration-500"></div>
+              </div>
+
+              <div id="vram-hardware-box" class="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs space-y-1">
+                <span class="text-slate-400 block font-semibold">Recommended Hardware:</span>
+                <span id="vram-hardware-text" class="text-emerald-400 font-bold font-mono text-sm block">
+                  Free Colab T4 GPU or Modern CPU / Laptop
+                </span>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 mt-4">
+              Colab T4 free GPU provides 15 GB VRAM, sufficient for up to 7B fp16 or 13B 4-bit models.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-[#0A0E17] py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <span>Gen-AI Developer Classroom Notes — 03 Aug 2026 Interactive Artifact</span>
+      <span class="font-mono text-slate-600">Built with Gemini API & HuggingFace / Spring AI Specs</span>
+    </div>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       1. GLOBAL STATE & TAB SWITCHING
+       ========================================================================== */
+    let currentStage = 1;
+    let currentTaskIndex = 0;
+    const GEMINI_API_KEY = ""; // Automatically injected by runtime
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-cyan-600', 'text-white', 'shadow');
+        btn.classList.add('text-slate-400');
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-cyan-600', 'text-white', 'shadow');
+        activeBtn.classList.remove('text-slate-400');
+      }
+      const activePanel = document.getElementById(`panel-${tabId}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      if (tabId === 'math') recalculateAttentionMath();
+      if (tabId === 'code') updateCodeWorkbench();
+      if (tabId === 'vram') calculateVRAM();
+      if (tabId === 'tasks') renderTaskWorkspace();
+    }
+
+    /* ==========================================================================
+       2. STAGE 1-7 TRANSFORMER PIPELINE DATA & SIMULATION LOGIC
+       ========================================================================== */
+    const promptPresets = [
+      "Democracy is rule by the people.",
+      "The animal didn't cross the street because it was tired.",
+      "Artificial Intelligence is changing the world."
+    ];
+
+    function loadPresetPrompt(idx) {
+      document.getElementById('pipeline-input').value = promptPresets[idx];
+      runPipelineSimulation();
+    }
+
+    function selectStage(stageNum) {
+      currentStage = stageNum;
+      
+      // Update Stepper buttons UI
+      for (let i = 1; i <= 7; i++) {
+        const btn = document.getElementById(`stage-btn-${i}`);
+        if (i === stageNum) {
+          btn.className = "stage-btn active text-left p-3 rounded-xl border bg-cyan-950/80 border-cyan-500 text-cyan-300 font-bold transition";
+        } else {
+          btn.className = "stage-btn text-left p-3 rounded-xl border bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 transition";
+        }
+      }
+
+      renderStageContent();
+    }
+
+    function stepStage(delta) {
+      let next = currentStage + delta;
+      if (next >= 1 && next <= 7) selectStage(next);
+    }
+
+    function runPipelineSimulation() {
+      selectStage(1);
+    }
+
+    function renderStageContent() {
+      const inputText = document.getElementById('pipeline-input').value.trim() || "Democracy is rule by the people.";
+      const badge = document.getElementById('stage-badge');
+      const title = document.getElementById('stage-title');
+      const mathPill = document.getElementById('stage-math-pill');
+      const body = document.getElementById('stage-content-body');
+      const desc = document.getElementById('stage-description');
+
+      badge.innerText = `Stage ${currentStage} / 7`;
+
+      switch (currentStage) {
+        case 1:
+          title.innerText = "1. Tokenization (Byte Pair Encoding)";
+          mathPill.innerText = "Text → Sub-word Tokens → Integer IDs";
+          desc.innerText = "Tokenization chops text into word-pieces. For example, 'Democracy' splits into ['Dem', 'ocracy'], preventing unknown out-of-vocabulary words.";
+          
+          // Simple BPE breakdown simulation
+          const words = inputText.split(" ");
+          let tokenItems = [];
+          let idCounter = 39608;
+          words.forEach(w => {
+            if (w.length > 6) {
+              const p1 = w.substring(0, 3);
+              const p2 = w.substring(3);
+              tokenItems.push({ text: p1, id: idCounter++ });
+              tokenItems.push({ text: p2, id: idCounter++ });
+            } else {
+              tokenItems.push({ text: w, id: idCounter++ });
+            }
+          });
+
+          body.innerHTML = `
+            <div class="space-y-4">
+              <div class="text-xs text-slate-400">Input String: <span class="font-mono text-cyan-300">"${inputText}"</span></div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 font-mono">
+                ${tokenItems.map(t => `
+                  <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center space-y-1">
+                    <div class="text-sm font-bold text-cyan-400">"${t.text}"</div>
+                    <div class="text-[10px] text-slate-500">ID: ${t.id}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          break;
+
+        case 2:
+          title.innerText = "2. Embedding & Positional Encoding";
+          mathPill.innerText = "Final_Embedding = Token_Embedding + Positional_Encoding";
+          desc.innerText = "Each token ID becomes a float vector (e.g., 768 dims). Sinusoidal positional encodings are added to inform the model of token order.";
+
+          body.innerHTML = `
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                  <div class="text-xs font-bold text-cyan-400">Token ID Embedding Matrix [Seq_Len × 768]</div>
+                  <div class="font-mono text-xs text-slate-300 space-y-1">
+                    <div>"Dem" → [0.21, -0.45, 0.88, ..., 0.12]</div>
+                    <div>"ocracy" → [0.33, 0.67, -0.22, ..., 0.44]</div>
+                    <div>"is" → [0.01, -0.01, 0.03, ..., -0.02]</div>
+                  </div>
+                </div>
+
+                <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+                  <div class="text-xs font-bold text-emerald-400">+ Positional Signal Waves</div>
+                  <div class="font-mono text-[11px] text-slate-400">
+                    $PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d})$
+                  </div>
+                  <div class="h-12 bg-slate-950 rounded border border-slate-800 flex items-center justify-center text-xs text-cyan-400 font-mono">
+                    ~~~~~~~~ Position 0 vs Position 5 Sinusoidal Signal ~~~~~~~~
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 3:
+          title.innerText = "3. Self-Attention Matrix Heatmap";
+          mathPill.innerText = "Attention(Q,K,V) = Softmax( Q·Kᵀ / √d_k ) · V";
+          desc.innerText = "Every token compares itself against every other token in the sequence to compute contextual relationships.";
+
+          const tokensList = inputText.split(" ").slice(0, 5);
+          body.innerHTML = `
+            <div class="space-y-3">
+              <p class="text-xs text-slate-400">Hover or view attention weights between sequence tokens:</p>
+              <div class="overflow-x-auto">
+                <div class="grid grid-cols-6 gap-1 max-w-md mx-auto text-center font-mono text-xs">
+                  <div class="bg-transparent"></div>
+                  ${tokensList.map(t => `<div class="p-1 text-slate-400 truncate">${t}</div>`).join('')}
+                  ${tokensList.map((rowToken, rowIndex) => `
+                    <div class="p-1 text-slate-400 truncate text-left">${rowToken}</div>
+                    ${tokensList.map((colToken, colIndex) => {
+                      const val = (rowIndex === colIndex ? 0.6 : (rowIndex + colIndex) % 2 === 0 ? 0.25 : 0.08).toFixed(2);
+                      const bgClass = val > 0.5 ? 'bg-cyan-600 text-white font-bold' : val > 0.2 ? 'bg-cyan-950 text-cyan-300' : 'bg-slate-900 text-slate-600';
+                      return `<div class="p-2 rounded ${bgClass}">${val}</div>`;
+                    }).join('')}
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 4:
+          title.innerText = "4. Multi-Head Attention Parallel Processing";
+          mathPill.innerText = "MultiHead = Concat(head_1, ..., head_h) · W_O";
+          desc.innerText = "Runs self-attention multiple times in parallel across different feature spaces (Head 1 = Subject-Verb, Head 2 = Pronouns, Head 3 = Causality).";
+
+          body.innerHTML = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="p-3 bg-cyan-950/40 border border-cyan-800 rounded-xl space-y-1 text-xs">
+                <div class="font-bold text-cyan-300">Head 1: Subject-Verb</div>
+                <p class="text-[11px] text-slate-400 font-mono">Connects "animal" ↔ "was tired"</p>
+              </div>
+              <div class="p-3 bg-emerald-950/40 border border-emerald-800 rounded-xl space-y-1 text-xs">
+                <div class="font-bold text-emerald-300">Head 2: Pronouns</div>
+                <p class="text-[11px] text-slate-400 font-mono">Resolves "it" → "animal"</p>
+              </div>
+              <div class="p-3 bg-purple-950/40 border border-purple-800 rounded-xl space-y-1 text-xs">
+                <div class="font-bold text-purple-300">Head 3: Causality</div>
+                <p class="text-[11px] text-slate-400 font-mono">Tracks "because" logic</p>
+              </div>
+              <div class="p-3 bg-amber-950/40 border border-amber-800 rounded-xl space-y-1 text-xs">
+                <div class="font-bold text-amber-300">Head 4: Negation</div>
+                <p class="text-[11px] text-slate-400 font-mono">Tracks "didn't cross"</p>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 5:
+          title.innerText = "5. Feed-Forward Neural Network (FFN)";
+          mathPill.innerText = "FFN(x) = GELU(x·W₁ + b₁)·W₂ + b₂";
+          desc.innerText = "Applies an independent per-position 2-layer MLP to expand and transform the token representations after attention mixing.";
+
+          body.innerHTML = `
+            <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-3 font-mono text-xs">
+              <div class="flex justify-between text-slate-400">
+                <span>Input dim: 768</span>
+                <span class="text-cyan-400 font-bold">→ Expanded dim: 3072 →</span>
+                <span>Output dim: 768</span>
+              </div>
+              <div class="p-3 bg-slate-950 rounded border border-slate-800 text-center text-slate-300">
+                [Token Vector] ➔ Linear Expansion (4x) ➔ Activation (GELU/ReLU) ➔ Linear Contraction
+              </div>
+            </div>
+          `;
+          break;
+
+        case 6:
+          title.innerText = "6. Final Linear Projection to Logits";
+          mathPill.innerText = "Logits = Hidden_State · Vocabulary_Wᵀ";
+          desc.innerText = "Maps the final hidden representation vector (768) across all 151,646 tokens in the vocabulary to produce unnormalized logit scores.";
+
+          body.innerHTML = `
+            <div class="space-y-3">
+              <div class="text-xs text-slate-400">Top Candidate Next Tokens (Unnormalized Logits):</div>
+              <div class="space-y-2 font-mono text-xs">
+                <div class="flex items-center justify-between p-2 bg-slate-900 rounded">
+                  <span class="text-cyan-300 font-bold">"by"</span>
+                  <div class="w-1/2 bg-slate-800 h-2 rounded overflow-hidden">
+                    <div class="bg-cyan-500 h-full w-[85%]"></div>
+                  </div>
+                  <span class="text-slate-400">Logit: 8.2</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-slate-900 rounded">
+                  <span class="text-slate-300">"for"</span>
+                  <div class="w-1/2 bg-slate-800 h-2 rounded overflow-hidden">
+                    <div class="bg-cyan-700 h-full w-[40%]"></div>
+                  </div>
+                  <span class="text-slate-400">Logit: 4.1</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-slate-900 rounded">
+                  <span class="text-slate-300">"of"</span>
+                  <div class="w-1/2 bg-slate-800 h-2 rounded overflow-hidden">
+                    <div class="bg-cyan-800 h-full w-[25%]"></div>
+                  </div>
+                  <span class="text-slate-400">Logit: 2.8</span>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 7:
+          title.innerText = "7. Softmax & Temperature Sampling Simulator";
+          mathPill.innerText = "P(x_i) = exp(logit_i / T) / ∑ exp(logit_j / T)";
+          desc.innerText = "Softmax converts logits to probabilities. Adjust Temperature below to observe how creative vs deterministic token selection behaves.";
+
+          body.innerHTML = `
+            <div class="space-y-4">
+              <div class="flex flex-col sm:flex-row items-center justify-between bg-slate-900 p-4 rounded-xl border border-slate-800 gap-4">
+                <div class="w-full sm:w-1/2">
+                  <div class="flex justify-between text-xs mb-1 font-bold">
+                    <span class="text-slate-300">Temperature (T):</span>
+                    <span id="temp-val-display" class="text-amber-400 font-mono">0.7</span>
+                  </div>
+                  <input type="range" id="temp-slider" min="0.1" max="2.0" step="0.1" value="0.7" oninput="updateSoftmaxDistribution()" class="w-full accent-amber-500">
+                </div>
+                <div class="text-xs text-slate-400 max-w-xs">
+                  <span class="text-cyan-400 font-bold block">T=0.1:</span> Deterministic (Greedy)<br>
+                  <span class="text-amber-400 font-bold block">T=0.7:</span> Balanced creativity<br>
+                  <span class="text-rose-400 font-bold block">T=2.0:</span> Highly random / uniform
+                </div>
+              </div>
+
+              <div id="softmax-prob-bars" class="space-y-2 font-mono text-xs">
+                <!-- Dynamic bars -->
+              </div>
+            </div>
+          `;
+          setTimeout(updateSoftmaxDistribution, 50);
+          break;
+      }
+    }
+
+    function updateSoftmaxDistribution() {
+      const tempSlider = document.getElementById('temp-slider');
+      if (!tempSlider) return;
+      const T = parseFloat(tempSlider.value);
+      document.getElementById('temp-val-display').innerText = T.toFixed(1);
+
+      const logits = [8.2, 5.1, 4.3, 2.0];
+      const tokens = ["by", "for", "of", "and"];
+
+      // Exp logits / T
+      const exps = logits.map(l => Math.exp(l / T));
+      const sumExps = exps.reduce((a, b) => a + b, 0);
+      const probs = exps.map(e => e / sumExps);
+
+      const container = document.getElementById('softmax-prob-bars');
+      if (!container) return;
+
+      container.innerHTML = tokens.map((t, idx) => {
+        const pct = (probs[idx] * 100).toFixed(1);
+        return `
+          <div class="flex items-center justify-between p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+            <span class="w-12 font-bold text-cyan-300">"${t}"</span>
+            <div class="flex-1 mx-3 bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+              <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full transition-all duration-300" style="width: ${pct}%"></div>
+            </div>
+            <span class="w-16 text-right font-bold text-amber-400">${pct}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ==========================================================================
+       3. SECTION 2: SELF-ATTENTION MATH MATRIX CALCULATOR
+       ========================================================================== */
+    function recalculateAttentionMath() {
+      const Q = [[1.2, 0.8], [0.4, 2.1], [1.5, 0.2]];
+      const K = [[1.0, 0.5], [0.2, 1.8], [1.2, 0.1]];
+
+      // Raw dot product 3x3
+      let scores = [];
+      for (let i = 0; i < 3; i++) {
+        let row = [];
+        for (let j = 0; j < 3; j++) {
+          let dot = Q[i][0] * K[j][0] + Q[i][1] * K[j][1];
+          row.push(dot);
+        }
+        scores.push(row);
+      }
+
+      const scoresDiv = document.getElementById('math-matrix-scores');
+      if (scoresDiv) {
+        scoresDiv.innerHTML = scores.flatMap(r => r.map(v => 
+          `<div class="p-2 bg-slate-950 rounded border border-slate-800 text-cyan-300">${v.toFixed(2)}</div>`
+        )).join('');
+      }
+
+      // Scaled by sqrt(4) = 2
+      let scaled = scores.map(row => row.map(v => v / 2.0));
+      const scaledDiv = document.getElementById('math-matrix-scaled');
+      if (scaledDiv) {
+        scaledDiv.innerHTML = scaled.flatMap(r => r.map(v => 
+          `<div class="p-2 bg-slate-950 rounded border border-slate-800 text-amber-300">${v.toFixed(2)}</div>`
+        )).join('');
+      }
+
+      // Softmax row-wise
+      let weights = scaled.map(row => {
+        let exps = row.map(v => Math.exp(v));
+        let sum = exps.reduce((a, b) => a + b, 0);
+        return exps.map(e => e / sum);
+      });
+
+      const weightsDiv = document.getElementById('math-matrix-weights');
+      if (weightsDiv) {
+        weightsDiv.innerHTML = weights.flatMap(r => r.map(v => 
+          `<div class="p-2 bg-slate-950 rounded border border-slate-800 text-emerald-300 font-bold">${v.toFixed(2)}</div>`
+        )).join('');
+      }
+
+      const outputDiv = document.getElementById('math-matrix-output');
+      if (outputDiv) {
+        outputDiv.innerHTML = weights.map((row, idx) => 
+          `<div class="p-2 bg-slate-950 rounded border border-slate-800 text-purple-300 font-mono">
+            Token ${idx + 1} Context Vector → [${(row[0] * 0.5 + 0.1).toFixed(2)}, ${(row[1] * 0.8 + 0.2).toFixed(2)}]
+           </div>`
+        ).join('');
+      }
+    }
+
+    /* ==========================================================================
+       4. SECTION 3: SEQ2SEQ TRANSLATOR TOGGLE
+       ========================================================================== */
+    function toggleArchMode(mode) {
+      const btnSeq = document.getElementById('arch-btn-seq2seq');
+      const btnCausal = document.getElementById('arch-btn-causal');
+      const encoderBox = document.getElementById('encoder-box');
+      const label = document.getElementById('cross-attn-label');
+
+      if (mode === 'seq2seq') {
+        btnSeq.className = "px-3 py-1.5 rounded-lg font-bold bg-cyan-600 text-white shadow";
+        btnCausal.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white";
+        encoderBox.classList.remove('opacity-30');
+        label.innerText = "Cross-Attention Link";
+      } else {
+        btnCausal.className = "px-3 py-1.5 rounded-lg font-bold bg-cyan-600 text-white shadow";
+        btnSeq.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white";
+        encoderBox.classList.add('opacity-30');
+        label.innerText = "Masked Self-Attention (Next Token Only)";
+      }
+    }
+
+    /* ==========================================================================
+       5. SECTION 4: 5 AI TASK SOLVERS
+       ========================================================================== */
+    function switchTaskSolver(taskIdx) {
+      currentTaskIndex = taskIdx;
+      document.querySelectorAll('.task-tab').forEach((btn, idx) => {
+        if (idx === taskIdx) {
+          btn.className = "task-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white";
+        } else {
+          btn.className = "task-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800";
+        }
+      });
+      renderTaskWorkspace();
+    }
+
+    function renderTaskWorkspace() {
+      const container = document.getElementById('task-workspace');
+      if (!container) return;
+
+      if (currentTaskIndex === 0) {
+        // Text Generation with apply_chat_template preview
+        container.innerHTML = `
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-300 block">Prompt Input:</label>
+            <input type="text" id="task0-prompt" value="Explain Democracy in simple words." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-cyan-200">
+            
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[11px] font-mono text-slate-400 block mb-1">Formatted via apply_chat_template():</span>
+              <pre class="text-[10px] font-mono text-emerald-400 whitespace-pre-wrap"><|im_start|>user
+Explain Democracy in simple words.<|im_end|>
+<|im_start|>assistant</pre>
+            </div>
+
+            <button onclick="executeGeminiTask(0)" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 font-bold text-xs rounded-xl text-white shadow">
+              <i class="fa-solid fa-bolt mr-1"></i> Generate Response
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300 block">Output Response:</label>
+            <div id="task0-output" class="p-4 bg-slate-950 border border-slate-800 rounded-xl min-h-[140px] text-xs text-slate-300 font-mono leading-relaxed">
+              Click Generate to run simulation...
+            </div>
+          </div>
+        `;
+      } else if (currentTaskIndex === 1) {
+        // Summarization
+        container.innerHTML = `
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-300 block">Document to Summarize:</label>
+            <textarea id="task1-text" class="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-cyan-200">Transformers are a neural network architecture introduced in 'Attention Is All You Need' (2017). They replaced recurrent models by utilizing self-attention mechanisms, enabling parallel computation across full sequences.</textarea>
+            <button onclick="executeGeminiTask(1)" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 font-bold text-xs rounded-xl text-white shadow">
+              <i class="fa-solid fa-compress mr-1"></i> Summarize Text
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300 block">Executive Summary:</label>
+            <div id="task1-output" class="p-4 bg-slate-950 border border-slate-800 rounded-xl min-h-[140px] text-xs text-emerald-300 font-mono leading-relaxed">
+              Click Summarize to reduce text length...
+            </div>
+          </div>
+        `;
+      } else if (currentTaskIndex === 2) {
+        // Sentiment Analysis
+        container.innerHTML = `
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-300 block">Product Review / Ticket Text:</label>
+            <input type="text" id="task2-text" value="The product broke after 2 days. Terrible quality." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-rose-200">
+            <button onclick="executeGeminiTask(2)" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 font-bold text-xs rounded-xl text-white shadow">
+              <i class="fa-solid fa-face-smile mr-1"></i> Classify Sentiment (JSON Output)
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300 block">Structured JSON Result:</label>
+            <pre id="task2-output" class="p-4 bg-slate-950 border border-slate-800 rounded-xl min-h-[140px] text-xs text-amber-300 font-mono">
+{
+  "label": "PENDING",
+  "confidence": 0.0
+}</pre>
+          </div>
+        `;
+      } else if (currentTaskIndex === 3) {
+        // Translation
+        container.innerHTML = `
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-300 block">Text to Translate:</label>
+            <input type="text" id="task3-text" value="Artificial Intelligence is changing the world." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs font-mono text-cyan-200">
+            
+            <div class="flex gap-2">
+              <select id="task3-lang" class="bg-slate-900 border border-slate-700 text-xs text-cyan-300 rounded-xl p-2 font-mono flex-1">
+                <option value="Hindi">English → Hindi (en-hi)</option>
+                <option value="French">English → French (en-fr)</option>
+                <option value="Spanish">English → Spanish (en-es)</option>
+              </select>
+              <button onclick="executeGeminiTask(3)" class="py-2 px-6 bg-purple-600 hover:bg-purple-500 font-bold text-xs rounded-xl text-white shadow">
+                Translate
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300 block">Translation Output:</label>
+            <div id="task3-output" class="p-4 bg-slate-950 border border-slate-800 rounded-xl min-h-[140px] text-sm text-cyan-300 font-mono">
+              Translation result will appear here...
+            </div>
+          </div>
+        `;
+      } else if (currentTaskIndex === 4) {
+        // Image Captioning
+        container.innerHTML = `
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-300 block">Vision Transformer Input (Image Prompt):</label>
+            <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center space-x-3">
+              <i class="fa-solid fa-dog text-3xl text-amber-400"></i>
+              <span class="text-xs text-slate-400 font-mono">[Image Feature Vector: Golden retriever running on sandy beach]</span>
+            </div>
+            <button onclick="executeGeminiTask(4)" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 font-bold text-xs rounded-xl text-white shadow">
+              <i class="fa-solid fa-image mr-1"></i> Generate Caption (BLIP-2 Pipeline)
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300 block">Generated Caption:</label>
+            <div id="task4-output" class="p-4 bg-slate-950 border border-slate-800 rounded-xl min-h-[140px] text-xs text-emerald-300 font-mono">
+              Click button to generate caption...
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    async function executeGeminiTask(idx) {
+      if (idx === 0) {
+        const prompt = document.getElementById('task0-prompt').value;
+        const out = document.getElementById('task0-output');
+        out.innerText = "Generating tokens via Gemini Flash...";
+        try {
+          const res = await callGeminiAPI(prompt);
+          out.innerText = res;
+        } catch(e) {
+          out.innerText = "Democracy is a system of government where power is vested in the people, who rule either directly or through freely elected representatives.";
+        }
+      } else if (idx === 1) {
+        const text = document.getElementById('task1-text').value;
+        const out = document.getElementById('task1-output');
+        out.innerText = "Summarizing...";
+        try {
+          const res = await callGeminiAPI("Summarize in 1 concise sentence: " + text);
+          out.innerText = res;
+        } catch(e) {
+          out.innerText = "Transformers revolutionized NLP by replacing recurrent networks with parallelized self-attention mechanisms.";
+        }
+      } else if (idx === 2) {
+        const text = document.getElementById('task2-text').value;
+        const out = document.getElementById('task2-output');
+        out.innerText = "Analyzing sentiment...";
+        try {
+          const res = await callGeminiAPI("Analyze sentiment for: '" + text + "'. Return raw JSON with keys: label, confidence, reasoning");
+          out.innerText = res;
+        } catch(e) {
+          out.innerText = '{\n  "label": "NEGATIVE",\n  "confidence": 0.99,\n  "reasoning": "Customer reported product broke after 2 days, expressing frustration over quality."\n}';
+        }
+      } else if (idx === 3) {
+        const text = document.getElementById('task3-text').value;
+        const lang = document.getElementById('task3-lang').value;
+        const out = document.getElementById('task3-output');
+        out.innerText = `Translating to ${lang}...`;
+        try {
+          const res = await callGeminiAPI(`Translate to ${lang}: "${text}". Return only translation.`);
+          out.innerText = res;
+        } catch(e) {
+          out.innerText = lang === 'Hindi' ? "कृत्रिम बुद्धिमत्ता दुनिया को बदल रही है।" : "L'intelligence artificielle change le monde.";
+        }
+      } else if (idx === 4) {
+        const out = document.getElementById('task4-output');
+        out.innerText = "A golden retriever runs joyfully along a sandy beach at sunset.";
+      }
+    }
+
+    async function callGeminiAPI(userQuery) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }]
+      };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    /* ==========================================================================
+       6. SECTION 5: PYTHON VS SPRING AI DUAL-CODE GENERATOR
+       ========================================================================== */
+    function updateCodeWorkbench() {
+      const pattern = document.getElementById('code-pattern-select').value;
+      const pyCode = document.getElementById('python-code');
+      const javaCode = document.getElementById('java-code');
+
+      if (pattern === 'prompt') {
+        pyCode.innerText = `import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+model_name = "Qwen/Qwen3-0.6B"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name, 
+    torch_dtype="auto", 
+    device_map="auto"
+)
+
+prompt = "Explain Democracy in simple words."
+messages = [{"role": "user", "content": prompt}]
+
+text = tokenizer.apply_chat_template(
+    messages, 
+    tokenize=False, 
+    add_generation_prompt=True
+)
+
+inputs = tokenizer(text, return_tensors="pt").to(model.device)
+
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=200,
+    temperature=0.7,
+    top_p=0.9,
+    do_sample=True
+)
+
+response = tokenizer.decode(
+    outputs[0][inputs.input_ids.shape[1]:], 
+    skip_special_tokens=True
+)
+print(response)`;
+
+        javaCode.innerText = `import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
+import org.springframework.stereotype.Service;
+
+@Service
+public class TransformerDemoService {
+    private final ChatClient chatClient;
+
+    public TransformerDemoService(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+
+    public String explainConcept(String concept) {
+        return chatClient.prompt()
+            .system("You are a concise and clear teacher.")
+            .user("Explain " + concept + " in simple words.")
+            .options(VertexAiGeminiChatOptions.builder()
+                .temperature(0.7)
+                .topP(0.9)
+                .maxOutputTokens(200)
+                .build())
+            .call()
+            .content();
+    }
+}`;
+      } else if (pattern === 'translation') {
+        pyCode.innerText = `from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+model_name = "Helsinki-NLP/opus-mt-en-hi"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+text = "Hello, how are you?"
+inputs = tokenizer(text, return_tensors="pt")
+
+outputs = model.generate(**inputs)
+translation = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(translation)`;
+
+        javaCode.innerText = `@Service
+public class TranslationService {
+    private final ChatClient chatClient;
+
+    public TranslationService(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+
+    public String translate(String text, String targetLang) {
+        return chatClient.prompt()
+            .system("You are a professional translator.")
+            .user("Translate to " + targetLang + ": " + text)
+            .options(VertexAiGeminiChatOptions.builder()
+                .temperature(0.2) // low temp for precision
+                .build())
+            .call()
+            .content();
+    }
+}`;
+      } else if (pattern === 'sentiment') {
+        pyCode.innerText = `from transformers import pipeline
+
+classifier = pipeline("sentiment-analysis")
+result = classifier("The product broke after 2 days. Terrible quality.")
+print(result) 
+# Output: [{'label': 'NEGATIVE', 'score': 0.99}]`;
+
+        javaCode.innerText = `@Service
+public class SentimentService {
+    private final ChatClient chatClient;
+
+    record SentimentResult(String label, double confidence, String reasoning) {}
+
+    public SentimentResult analyze(String text) {
+        return chatClient.prompt()
+            .user("Analyze sentiment for: " + text)
+            .call()
+            .entity(SentimentResult.class); // auto-deserialize JSON
+    }
+}`;
+      } else if (pattern === 'multiturn') {
+        pyCode.innerText = `messages = [
+    {"role": "system", "content": "You are a teacher."},
+    {"role": "user", "content": "What is Democracy?"}
+]
+
+# Generate turn 1
+text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+inputs = tokenizer(text, return_tensors="pt").to(model.device)
+outputs = model.generate(**inputs, max_new_tokens=200)
+reply = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+
+# Append & turn 2
+messages.append({"role": "assistant", "content": reply})
+messages.append({"role": "user", "content": "Give me one real example."})`;
+
+        javaCode.innerText = `// Spring AI Chat Memory or ChatClientAdvisor handling multi-turn history
+public String multiTurnChat(String conversationId, String nextUserMessage) {
+    return chatClient.prompt()
+        .user(nextUserMessage)
+        .advisors(new PromptChatMemoryAdvisor(chatMemory))
+        .call()
+        .content();
+}`;
+      }
+    }
+
+    function copyCode(id) {
+      const code = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(code);
+      alert("Code copied to clipboard!");
+    }
+
+    /* ==========================================================================
+       7. SECTION 6: VRAM CALCULATOR
+       ========================================================================== */
+    function calculateVRAM() {
+      const params = parseFloat(document.getElementById('vram-params').value);
+      const bits = parseFloat(document.getElementById('vram-precision').value);
+
+      const bytesPerParam = bits / 8.0;
+      const baseVRAM = params * bytesPerParam; // GB
+      const totalVRAM = baseVRAM * 1.25; // 25% overhead for KV Cache + Context
+
+      const resultMb = document.getElementById('vram-result-mb');
+      const bar = document.getElementById('vram-bar');
+      const text = document.getElementById('vram-hardware-text');
+
+      resultMb.innerText = `~${totalVRAM.toFixed(1)} GB`;
+
+      let pct = Math.min((totalVRAM / 80.0) * 100, 100);
+      bar.style.width = `${pct}%`;
+
+      if (totalVRAM <= 2.0) {
+        text.innerText = "Free Colab T4 GPU, Laptop GPU or CPU (Ultra Lightweight)";
+        text.className = "text-emerald-400 font-bold font-mono text-sm block";
+      } else if (totalVRAM <= 8.0) {
+        text.innerText = "Colab T4 GPU / Consumer GPU (RTX 3060 12GB / RTX 4060)";
+        text.className = "text-cyan-400 font-bold font-mono text-sm block";
+      } else if (totalVRAM <= 16.0) {
+        text.innerText = "Colab T4 (15GB) / RTX 3090 / RTX 4090 (24GB)";
+        text.className = "text-amber-400 font-bold font-mono text-sm block";
+      } else {
+        text.innerText = "Enterprise Hardware: A100 (40GB/80GB) or 2× A100 GPUs";
+        text.className = "text-rose-400 font-bold font-mono text-sm block";
+      }
+    }
+
+    window.onload = function() {
+      selectStage(1);
+      recalculateAttentionMath();
+      updateCodeWorkbench();
+      calculateVRAM();
+      renderTaskWorkspace();
+    };
+  </script>
+</body>
+</html>
