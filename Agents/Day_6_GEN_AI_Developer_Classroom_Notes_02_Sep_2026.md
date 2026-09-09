@@ -1,5 +1,7 @@
 # Gen-AI Developer Classroom Notes - 02/Sep/2026
 
+**Reference Blog**: [Direct AI Blog - Day 6: Agents and Memory Management](https://directai.blog/2026/09/02/gen-ai-developer-classroom-notes-02-sep-2026/)
+
 ## Table of Contents
 1. [Using Agents and Chat Models](#using-agents-and-chat-models)
 2. [Memory by Scope](#memory-by-scope)

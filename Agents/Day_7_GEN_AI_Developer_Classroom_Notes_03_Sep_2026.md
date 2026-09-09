@@ -1,5 +1,7 @@
 # Gen-AI Developer Classroom Notes - 03/Sep/2026
 
+**Reference Blog**: [Direct AI Blog - Day 7: Long-Term Memory and Tools](https://directai.blog/2026/09/03/gen-ai-developer-classroom-notes-03-sep-2026/)
+
 ## Table of Contents
 1. [Long-Term Memory](#long-term-memory)
 2. [Memory Types](#memory-types)

@@ -1,5 +1,7 @@
 # Day 4: Messages in LangChain - Understanding AI Communication
 
+**Reference Blog**: [Direct AI Blog - Day 4: Messages in LangChain](https://directai.blog/2026/08/31/gen-ai-developer-classroom-notes-31-aug-2026/)
+
 ## Learning Objectives
 - Understand the different types of messages in LangChain
 - Learn how to use SystemMessage, HumanMessage, AIMessage, and ToolMessage

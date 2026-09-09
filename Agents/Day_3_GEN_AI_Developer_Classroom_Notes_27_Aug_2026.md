@@ -2,6 +2,8 @@
 
 ## Developer Environment Setup for Building AI Agents
 
+**Reference Blog**: [Direct AI Blog - Day 3: Developer Environment Setup](https://directai.blog/2026/08/27/gen-ai-developer-classroom-notes-27-aug-2026/)
+
 ### Learning Objectives
 By the end of this guide, you will have:
 - A complete development environment for building AI agents

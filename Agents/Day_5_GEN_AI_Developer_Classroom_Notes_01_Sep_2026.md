@@ -1,5 +1,7 @@
 # Gen-AI Developer Classroom Notes - 01/Sep/2026
 
+**Reference Blog**: [Direct AI Blog - Day 5: Prompt Engineering and Memory](https://directai.blog/2026/09/01/gen-ai-developer-classroom-notes-01-sep-2026/)
+
 ## Table of Contents
 1. [Prompt Engineering](#prompt-engineering)
 2. [Context Windows for Models](#context-windows-for-models)

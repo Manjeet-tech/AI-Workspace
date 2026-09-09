@@ -2,6 +2,8 @@
 
 ## Building a Basic Agent: A Beginner's Guide
 
+**Reference Blog**: [Direct AI Blog - Day 2: Building a Basic Agent](https://directai.blog/2026/08/26/gen-ai-developer-classroom-notes-26-aug-2026/)
+
 ### Learning Objectives
 By the end of this guide, you will understand:
 - What an AI agent is and its core components

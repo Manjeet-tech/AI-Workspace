@@ -1,6 +1,8 @@
 # Gen-AI Developer Classroom Notes - 25/Aug/2026
 ## Comprehensive Study Guide on AI Agents
 
+**Reference Blog**: [Direct AI Blog - Day 1: Introduction to AI Agents](https://directai.blog/2026/08/25/gen-ai-developer-classroom-notes-25-aug-2026/)
+
 ---
 
 ## Table of Contents
